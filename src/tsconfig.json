@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES5",
+    "lib": [ "ES2015", "DOM" ],
+    "outDir": "../release",
+    "module": "commonjs",
+    "strict": true,
+    "strictNullChecks": false,
+    "skipLibCheck": true
+  }
+}

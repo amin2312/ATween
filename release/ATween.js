@@ -20,16 +20,19 @@ var ATween = /** @class */ (function () {
          * Elapsed percent of tween(unit: millisecond).
          **/
         this.elapsedPercent = 0;
-        this._repeatTimes0 = 0;
-        this._repeatTimes1 = 0;
+        this._repeatNextStartMs = 0;
+        this._repeatTimes = 0;
+        this._repeatRefs = 0; // references, reference count
+        this._repeatSteps = 0;
         this._repeatDelayMs = 0;
         this._startMs = 0;
         this._delayMs = 0;
         this._durationMs = 1;
-        this._repeatOverMs = 0;
-        this._repeatedTimes = 0;
         this._onStartCallbackFired = false;
         this._initedTarget = false;
+        this._synObj = null;
+        this._synSfx = null;
+        this._updateSteps = 0;
         this._yoyo = false;
         this._isCompleted = false;
         this._pause = false;
@@ -88,6 +91,7 @@ var ATween = /** @class */ (function () {
      * @param withComplete Indicates whether to call complete function.
      */
     ATween.killAll = function (withComplete) {
+        if (withComplete === void 0) { withComplete = false; }
         var clone = ATween._instances.concat([]);
         var len = clone.length;
         for (var i = 0; i < len; i++) {
@@ -127,6 +131,25 @@ var ATween = /** @class */ (function () {
         return false;
     };
     /**
+     * As name mean.
+     */
+    ATween.checkInstalled = function () {
+        if (!ATween._isInstalled) {
+            ATween._isInstalled = true;
+            if (window != null && window.requestAnimationFrame != null) {
+                var lastTime = 0;
+                var onFrame = function (now) {
+                    var ms = now - lastTime;
+                    lastTime = now;
+                    ATween.updateAll(ms);
+                    window.requestAnimationFrame(onFrame);
+                };
+                lastTime = window.performance.now();
+                window.requestAnimationFrame(onFrame);
+            }
+        }
+    };
+    /**
      * Create a tween.
      * @param target It must be a object.
      * @param durationMs set duration, not including any repeats or delays.
@@ -134,6 +157,7 @@ var ATween = /** @class */ (function () {
      */
     ATween.newTween = function (target, durationMs, delayMs) {
         if (delayMs === void 0) { delayMs = 0; }
+        ATween.checkInstalled();
         var t = new ATween(target);
         t._durationMs = durationMs;
         t._delayMs = delayMs;
@@ -145,8 +169,9 @@ var ATween = /** @class */ (function () {
      * @param onCompleteCallback The callback function when complete.
      * @param onCompleteParams The callback parameters(array) when complete.
      */
-    ATween.newTimeout = function (delayMs, onCompleteCallback, onCompleteParams) {
+    ATween.newTimer = function (delayMs, onCompleteCallback, onCompleteParams) {
         if (onCompleteParams === void 0) { onCompleteParams = null; }
+        ATween.checkInstalled();
         var t = new ATween(null);
         t._delayMs = delayMs;
         t.onComplete(onCompleteCallback, onCompleteParams);
@@ -166,6 +191,7 @@ var ATween = /** @class */ (function () {
     ATween.newRepeat = function (delayMs, repeatTimes, onRepeatCallback, onCompleteCallback, onCompleteParams) {
         if (onCompleteCallback === void 0) { onCompleteCallback = null; }
         if (onCompleteParams === void 0) { onCompleteParams = null; }
+        ATween.checkInstalled();
         var t = new ATween(null);
         t._delayMs = delayMs;
         t.repeat(repeatTimes);
@@ -182,7 +208,7 @@ var ATween = /** @class */ (function () {
         this.elapsedMs = 0;
         this._isCompleted = false;
         this._onStartCallbackFired = false;
-        this._repeatOverMs = 0;
+        this._repeatNextStartMs = 0;
         this._startMs = this._delayMs;
         if (this._delayMs == 0 && this._target != null) {
             this.initTarget();
@@ -193,32 +219,29 @@ var ATween = /** @class */ (function () {
      * Init target.
      */
     ATween.prototype.initTarget = function () {
-        for (var property in this._valuesB) {
+        for (var property in this._dstVals) {
             var curVal = this._target[property];
-            var valueB = this._valuesB[property];
-            if (valueB instanceof Array) {
-                if (valueB.length == 0) {
+            var dstVal = this._dstVals[property];
+            if (dstVal instanceof Array) {
+                if (dstVal.length == 0) {
                     continue;
                 }
-                this._valuesB[property] = [curVal].concat(valueB);
+                this._dstVals[property] = [curVal].concat(dstVal);
             }
-            if (curVal == null) {
-                continue;
-            }
-            // convert Empty value(null, false, '') to 0
+            // !! Convert Empty value(null, false, '') to 0
             if (!(curVal instanceof Array)) {
                 curVal *= 1.0;
             }
-            // create A
-            if (this._valuesA == null) {
-                this._valuesA = {};
+            // create current values set
+            if (this._srcVals == null) {
+                this._srcVals = {};
             }
-            this._valuesA[property] = curVal;
-            // create (R))everse
-            if (this._valuesR == null) {
-                this._valuesR = {};
+            this._srcVals[property] = curVal;
+            // create reverse values set
+            if (this._revVals == null) {
+                this._revVals = {};
             }
-            this._valuesR[property] = curVal;
+            this._revVals[property] = curVal;
         }
         this._initedTarget = true;
     };
@@ -231,33 +254,41 @@ var ATween = /** @class */ (function () {
             return;
         }
         var fn = this._easing;
-        var newValue = fn(percent);
-        for (var property in this._valuesA) {
-            var valueA = this._valuesA[property];
-            if (valueA == null) {
+        var ePercent = fn(percent);
+        for (var property in this._srcVals) {
+            var curVal = this._srcVals[property];
+            if (curVal == null) {
                 continue;
             }
-            var start = valueA;
-            var end = this._valuesB[property];
-            if (end instanceof Array) {
-                this._target[property] = this._interpolation(end, newValue);
+            var valueA = curVal;
+            var valueB = this._dstVals[property];
+            if (valueB instanceof Array) {
+                this._target[property] = this._interpolation(valueB, ePercent);
             }
-            else if ((typeof end) == 'number') {
-                var endNum = end;
-                var finVal;
+            else if ((typeof valueB) == 'number') {
+                var startVal = valueA;
+                var endVal = valueB;
+                var newVal;
                 if (percent >= 1) {
-                    finVal = endNum;
+                    newVal = endVal;
                 }
                 else {
-                    finVal = start + (endNum - start) * newValue;
+                    newVal = startVal + (endVal - startVal) * ePercent;
                 }
-                this._target[property] = finVal;
+                this._target[property] = newVal;
+                if (this._synObj != null) {
+                    this._synObj.style.setProperty(property, newVal + this._synSfx);
+                }
+            }
+            else {
+                throw "Unknown destination value" + valueB;
             }
         }
         // [Callback Handler]
         if (ignoreCallback == false && this._onUpdateCallback != null) {
+            this._updateSteps++;
             var cb = this._onUpdateCallback;
-            cb.apply(null, [percent, newValue]);
+            cb.call(null, percent, this._updateSteps);
         }
     };
     /**
@@ -265,9 +296,9 @@ var ATween = /** @class */ (function () {
      */
     ATween.prototype.update = function (ms) {
         this.elapsedMs += ms;
-        if (this._repeatOverMs != 0) {
-            if (this.elapsedMs >= this._repeatOverMs) {
-                this._repeatOverMs = 0;
+        if (this._repeatNextStartMs != 0) {
+            if (this.elapsedMs >= this._repeatNextStartMs) {
+                this._repeatNextStartMs = 0;
                 if (this._yoyo == false) {
                     this.updateTarget(0);
                 }
@@ -290,43 +321,42 @@ var ATween = /** @class */ (function () {
         }
         // update values
         this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
-        this.elapsedPercent = this.elapsedPercent > 1 ? 1 : this.elapsedPercent;
+        if (this.elapsedPercent > 1) {
+            this.elapsedPercent = 1;
+        }
         // update target
         this.updateTarget(this.elapsedPercent);
         // end processing
         if (this.elapsedPercent == 1) {
-            if (this._repeatTimes1 > 0) {
-                this._repeatedTimes++;
-                if (isFinite(this._repeatTimes1) == true) {
-                    this._repeatTimes1--;
+            if (this._repeatRefs > 0) {
+                this._repeatSteps++;
+                if (isFinite(this._repeatRefs) == true) {
+                    this._repeatRefs--;
                 }
-                // update target properties
+                // reset target properties
                 if (this._target != null) {
-                    for (var property in this._valuesR) {
-                        var valueB = this._valuesB[property];
-                        if (typeof (valueB) == 'string') {
-                            this._valuesR[property] = this._valuesR[property] + parseFloat(valueB);
-                        }
+                    for (var property in this._revVals) {
+                        var valueB = this._dstVals[property];
                         if (this._yoyo == true) {
-                            var tmp = this._valuesR[property];
-                            this._valuesR[property] = valueB;
-                            this._valuesB[property] = tmp;
+                            var tmp = this._revVals[property];
+                            this._revVals[property] = valueB;
+                            this._dstVals[property] = tmp;
                         }
-                        this._valuesA[property] = this._valuesR[property];
+                        this._srcVals[property] = this._revVals[property];
                     }
                 }
-                // reset values
-                this._repeatOverMs = this.elapsedMs + this._repeatDelayMs;
-                this._startMs = this.elapsedMs + this._repeatDelayMs + this._delayMs;
+                // reset time
+                this._repeatNextStartMs = this.elapsedMs + this._repeatDelayMs;
+                this._startMs = this._repeatNextStartMs + this._delayMs;
                 // [Callback Handler]
                 if (this._onRepeatCallback != null) {
                     var cbR = this._onRepeatCallback;
-                    if (cbR.call(null, this._repeatedTimes) == false) {
-                        this._repeatTimes1 = 0;
+                    if (cbR.call(null, this._repeatSteps) == false) {
+                        this._repeatRefs = 0;
                     }
                 }
             }
-            if (this._repeatTimes1 <= 0) {
+            if (this._repeatRefs <= 0) {
                 this._isCompleted = true;
                 // [Callback Handler]
                 if (this._onCompleteCallback != null) {
@@ -374,10 +404,30 @@ var ATween = /** @class */ (function () {
         configurable: true
     });
     /**
-     * To.
+     * The destination value that the target wants to achieve.
+     * @param endValus destination values.
      */
-    ATween.prototype.to = function (properties) {
-        this._valuesB = properties;
+    ATween.prototype.to = function (endValus) {
+        this._dstVals = endValus;
+        return this;
+    };
+    /**
+     * Sync new value to HTMLElement style property.
+     * @remarks
+     * Thie method only exist js version and browse env.
+     * @param obj HTMLElement or element id
+     */
+    ATween.prototype.sync = function (obj, unit) {
+        if (unit === void 0) { unit = 'px'; }
+        var t;
+        if (obj instanceof HTMLElement) {
+            t = obj;
+        }
+        else {
+            t = document.getElementById(obj);
+        }
+        this._synObj = t;
+        this._synSfx = unit;
         return this;
     };
     /**
@@ -390,16 +440,27 @@ var ATween = /** @class */ (function () {
         if (yoyo === void 0) { yoyo = false; }
         if (delayMs === void 0) { delayMs = 0; }
         this._yoyo = yoyo;
-        this._repeatTimes0 = times;
-        this._repeatTimes1 = times;
+        this._repeatTimes = times;
+        this._repeatRefs = times;
         this._repeatDelayMs = delayMs;
+        return this;
+    };
+    /**
+     * Immediate call the repeat function.
+     * @remark
+     * You need init the env in sometimes, then it's a good choice.
+     */
+    ATween.prototype.callRepeat = function () {
+        if (this._onRepeatCallback(0) == false) {
+            this.release().cancel();
+        }
         return this;
     };
     /**
      * Get repeat times.
      */
     ATween.prototype.getRepeatTimes = function () {
-        return this._repeatTimes0;
+        return this._repeatTimes;
     };
     /**
      * Set easing function.
@@ -450,6 +511,18 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
+     * Set the callback function when the tween is completed.
+     */
+    ATween.prototype.onComplete = function (callback, params) {
+        if (params === void 0) { params = null; }
+        this._onCompleteCallback = callback;
+        this._onCompleteParams = params;
+        if (this._onCompleteParams != null) {
+            this._onCompleteParams = this._onCompleteParams.concat([]);
+        }
+        return this;
+    };
+    /**
      * Set the callback function when the tween is canceled.
      */
     ATween.prototype.onCancel = function (callback) {
@@ -464,27 +537,6 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Immediate call the repeat function.
-     */
-    ATween.prototype.callRepeat = function () {
-        if (this._onRepeatCallback(0) == false) {
-            this.release().cancel();
-        }
-        return this;
-    };
-    /**
-     * Set the callback function when the tween is completed.
-     */
-    ATween.prototype.onComplete = function (callback, params) {
-        if (params === void 0) { params = null; }
-        this._onCompleteCallback = callback;
-        this._onCompleteParams = params;
-        if (this._onCompleteParams != null) {
-            this._onCompleteParams = this._onCompleteParams.concat([]);
-        }
-        return this;
-    };
-    /**
      * Determine whether stop all tweens.
      */
     ATween.stop = false;
@@ -492,6 +544,10 @@ var ATween = /** @class */ (function () {
      * The manager for all tween instances.
      */
     ATween._instances = new Array();
+    /**
+     * Indicates whether has installed in current environment.
+     */
+    ATween._isInstalled = false;
     return ATween;
 }());
 /**

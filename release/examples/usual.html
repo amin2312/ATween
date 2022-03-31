@@ -3,25 +3,184 @@
 <head>
 
 </head>
+<style>
+    html {
+        font-size: 12px;
+    }
+
+    html,
+    body {
+        margin: 0px;
+        padding: 0px;
+        color: #000;
+    }
+
+    button {
+        padding: 0px;
+        margin: 0px;
+    }
+
+    table {
+        border-spacing: 0px;
+        border-collapse: collapse;
+    }
+
+    td {
+        border: 1px #000 solid;
+        padding: 10px;
+    }
+
+    #main {
+        width: 900px;
+        margin: 0px auto;
+    }
+
+    .box50 {
+        position: relative;
+        width: 50px;
+        height: 50px;
+        background-color: blue;
+        left: 0px;
+        top: 0px;
+    }
+
+    #TestTable {
+        width: 100%;
+    }
+
+    #TestTable thead td {
+        text-align: center;
+        font-weight: bold;
+    }
+
+    #TestTable td {
+        height: 50px;
+    }
+
+    #TestTable td:nth-child(1) {
+        text-align: center;
+        width: 40px;
+    }
+
+    #TestTable td:nth-child(2) {
+        text-align: center;
+        width: 80px;
+    }
+
+    #TestTable td:nth-child(3) {
+        width: 460px;
+    }
+
+    #TestTable button {
+        padding: 5px;
+        font-size: 2rem;
+    }
+
+    .shine1 {
+        background-color: #0C0;
+    }
+
+    .shine2 {
+        background-color: #090;
+    }
+</style>
 
 <body>
-    <table>
-        <thead>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>1</td>
-                <td>2</td>
-                <td>3</td>
-            </tr>
-        </tbody>
-    </table>
+    <br />
+    <div id="main">
+        <table id="TestTable">
+            <thead>
+                <tr>
+                    <td>Test</td>
+                    <td>Method</td>
+                    <td>Target</td>
+                    <td>Button</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>a1</td>
+                    <td>to</td>
+                    <td>
+                        <div id="a1" class="box50"></div>
+                    </td>
+                    <td><button onclick="a1('a1')">Start</button></td>
+                </tr>
+                <tr>
+                    <td>a2</td>
+                    <td>to+sync</td>
+                    <td>
+                        <div id="a2" class="box50"></div>
+                    </td>
+                    <td><button onclick="a2('a2')">Start</button></td>
+                </tr>
+                <tr>
+                    <td>a3</td>
+                    <td>to (2D)</td>
+                    <td style="height: 100px; vertical-align: top;">
+                        <div id="a3" class="box50"></div>
+                    </td>
+                    <td><button onclick="a3('a3')">Start</button></td>
+                </tr>
+                <tr>
+                    <td>b1</td>
+                    <td>repeat</td>
+                    <td>
+                        <div id="b1" class="box50"></div>
+                    </td>
+                    <td><button onclick="b1('b1')">Start</button></td>
+                </tr>
+                <tr>
+                    <td>b2</td>
+                    <td>repeat+interval</td>
+                    <td>
+                        <div id="b2" class="box50"></div>
+                    </td>
+                    <td><button onclick="b2('b2')">Start</button></td>
+                </tr>
+                <tr>
+                    <td>b3</td>
+                    <td>repeat+yoyo</td>
+                    <td>
+                        <div id="b3" class="box50"></div>
+                    </td>
+                    <td><button onclick="b3('b3')">Start</button></td>
+                </tr>
+                <tr>
+                    <td>c1</td>
+                    <td>statr & stop</td>
+                    <td>
+                        <div id="c1" class="box50"></div>
+                    </td>
+                    <td><button onclick="c1_a('c1')">Start</button>&nbsp;<button onclick="c1_b('c1')">Stop</button></td>
+                </tr>
+                <tr>
+                    <td>d1</td>
+                    <td>killAll & retain</td>
+                    <td>
+                        <div id="d1a" class="box50" style="margin-bottom: 5px;"></div>
+                        <div id="d1b" class="box50" style="margin-bottom: 5px;"></div>
+                        <div id="d1c" class="box50"></div>
+                    </td>
+                    <td><button onclick="d1_a('d1')">Start</button>&nbsp;<button onclick="d1_b('d1')">KillAlL</button></td>
+                </tr>
+                <tr>
+                    <td>e1</td>
+                    <td>[event]
+                        <div id="e1s">onStart</div>
+                        <div id="e1u">onUpdate</div>
+                        <div id="e1c">onComplete</div>
+                    </td>
+                    <td>
+                        <div id="e1" class="box50"></div>
+                    </td>
+                    <td><button onclick="e1('e1')">Start</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </body>
 
 </html>
+<script src="../ATween.js"></script>
 <script src="usual.js"></script>

@@ -100,24 +100,29 @@ var ATween = /** @class */ (function () {
         }
     };
     /**
-     * Kill all tweens of indicated target.
-     * @param target The tween target object.
+     * Kill all tweens of indicated target or sync object.
+     * @param target As name mean.
      * @param withComplete Indicates whether to call complete function.
+     * @returns Number of killed instances
      */
-    ATween.killTweens = function (target, withComplete) {
+    ATween.killTweens = function (targetOrSyncObject, withComplete) {
         if (withComplete === void 0) { withComplete = false; }
         var clone = ATween._instances.concat([]);
         var len = clone.length;
+        var num = 0;
         for (var i = 0; i < len; i++) {
             var ins = clone[i];
-            if (ins._target == target) {
+            if (ins._target == targetOrSyncObject || ins._synObj == targetOrSyncObject) {
                 ins.cancel(withComplete);
+                num++;
             }
         }
+        return num;
     };
     /**
      * Check the target is tweening.
-     * @param target The tween target object.
+     * @param target As name mean.
+     * @returns The result.
      */
     ATween.isTweening = function (target) {
         var instances = ATween._instances;
@@ -151,9 +156,12 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Create a tween.
+     * @remarks
+     * Don't reuse the tween instance, it's one-time
      * @param target It must be a object.
      * @param durationMs set duration, not including any repeats or delays.
      * @param delayMs set initial delay which is the length of time in ms before the animation should begin.
+     * @returns Tween instance
      */
     ATween.newTween = function (target, durationMs, delayMs) {
         if (delayMs === void 0) { delayMs = 0; }
@@ -164,44 +172,47 @@ var ATween = /** @class */ (function () {
         return t;
     };
     /**
-     * Create a timer.
-     * @param delayMs The triggered delay time.
+     * Create a once timer.
+     * @remarks
+     * Don't reuse the tween instance, it's one-time
+     * @param intervalMs As name mean(unit:ms)
      * @param onCompleteCallback The callback function when complete.
      * @param onCompleteParams The callback parameters(array) when complete.
+     * @returns Tween instance
      */
-    ATween.newTimer = function (delayMs, onCompleteCallback, onCompleteParams) {
+    ATween.newOnce = function (intervalMs, onCompleteCallback, onCompleteParams) {
         if (onCompleteParams === void 0) { onCompleteParams = null; }
         ATween.checkInstalled();
         var t = new ATween(null);
-        t._delayMs = delayMs;
+        t._delayMs = intervalMs;
         t.onComplete(onCompleteCallback, onCompleteParams);
-        t.start();
         return t;
     };
     /**
-     * Create a repeat timer.
+     * Create a timer.
      * @remarks
-     * When you user onRepeatCallback parameter, It wiil take back the time count, if return false, then will cancel this timer.
-     * @param delayMs The triggered delay time.
-     * @param repeatTimes Repeat Times.
-     * @param onRepeatCallback The callback parameters when repeat.
+     * Don't reuse the tween instance, it's one-time
+     * @param intervalMs As name mean(unit:ms)
+     * @param times Repeat Times(-1 is infinity)
+     * @param onRepeatCallback  if return false, then will cancel this timer.
      * @param onCompleteCallback The callback function when complete.
      * @param onCompleteParams The callback parameters(array) when complete.
+     * @returns Tween instance
      **/
-    ATween.newRepeat = function (delayMs, repeatTimes, onRepeatCallback, onCompleteCallback, onCompleteParams) {
+    ATween.newTimer = function (intervalMs, times, onRepeatCallback, onCompleteCallback, onCompleteParams) {
         if (onCompleteCallback === void 0) { onCompleteCallback = null; }
         if (onCompleteParams === void 0) { onCompleteParams = null; }
         ATween.checkInstalled();
         var t = new ATween(null);
-        t._delayMs = delayMs;
-        t.repeat(repeatTimes);
+        t._delayMs = intervalMs;
+        t.repeat(times);
         t.onRepeat(onRepeatCallback);
         t.onComplete(onCompleteCallback, onCompleteParams);
-        t.start();
         return t;
     };
     /**
      * Start the tween/timer.
+     * @returns Tween instance
      */
     ATween.prototype.start = function () {
         ATween._add(this);
@@ -328,11 +339,9 @@ var ATween = /** @class */ (function () {
         this.updateTarget(this.elapsedPercent);
         // end processing
         if (this.elapsedPercent == 1) {
-            if (this._repeatRefs > 0) {
+            if (this._repeatRefs != 0) {
                 this._repeatSteps++;
-                if (isFinite(this._repeatRefs) == true) {
-                    this._repeatRefs--;
-                }
+                this._repeatRefs--;
                 // reset target properties
                 if (this._target != null) {
                     for (var property in this._revVals) {
@@ -351,12 +360,12 @@ var ATween = /** @class */ (function () {
                 // [Callback Handler]
                 if (this._onRepeatCallback != null) {
                     var cbR = this._onRepeatCallback;
-                    if (cbR.call(null, this._repeatSteps) == false) {
+                    if (cbR.call(null, this._repeatSteps) === false) {
                         this._repeatRefs = 0;
                     }
                 }
             }
-            if (this._repeatRefs <= 0) {
+            if (this._repeatRefs == 0) {
                 this._isCompleted = true;
                 // [Callback Handler]
                 if (this._onCompleteCallback != null) {
@@ -372,14 +381,16 @@ var ATween = /** @class */ (function () {
     /**
      * Cancel.
      * @param withComplete indicate that whether call complete function.
+     * @returns Tween instance
      */
     ATween.prototype.cancel = function (withComplete) {
         if (withComplete === void 0) { withComplete = false; }
         if (this._isCompleted == true || this._retain == true) {
-            return this;
+            return;
         }
+        this._repeatRefs = 0;
         if (withComplete == true) {
-            this.update(this._startMs + this._delayMs + this._durationMs);
+            this.update(0x7FFFFFFF);
         }
         ATween._del(this);
         this._isCompleted = true;
@@ -388,7 +399,6 @@ var ATween = /** @class */ (function () {
             var cb = this._onCancelCallback;
             cb();
         }
-        return this;
     };
     Object.defineProperty(ATween.prototype, "pause", {
         get: function () {
@@ -406,16 +416,18 @@ var ATween = /** @class */ (function () {
     /**
      * The destination value that the target wants to achieve.
      * @param endValus destination values.
+     * @returns Tween instance
      */
     ATween.prototype.to = function (endValus) {
         this._dstVals = endValus;
         return this;
     };
     /**
-     * Sync new value to HTMLElement style property.
+     * Sync the new value to HTMLElement style property.
      * @remarks
-     * Thie method only exist js version and browse env.
+     * This method only adapts to the browser environment.
      * @param obj HTMLElement or element id
+     * @returns Tween instance
      */
     ATween.prototype.sync = function (obj, unit) {
         if (unit === void 0) { unit = 'px'; }
@@ -435,6 +447,7 @@ var ATween = /** @class */ (function () {
      * @param times As name mean
      * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
      * @param delayMs delay trigger(unit ms).
+     * @returns Tween instance
      */
     ATween.prototype.repeat = function (times, yoyo, delayMs) {
         if (yoyo === void 0) { yoyo = false; }
@@ -449,6 +462,7 @@ var ATween = /** @class */ (function () {
      * Immediate call the repeat function.
      * @remark
      * You need init the env in sometimes, then it's a good choice.
+     * @returns Tween instance
      */
     ATween.prototype.callRepeat = function () {
         if (this._onRepeatCallback(0) == false) {
@@ -464,6 +478,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set easing function.
+     * @returns Tween instance
      */
     ATween.prototype.easing = function (func) {
         this._easing = func;
@@ -471,6 +486,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Keep this tween, killAll has no effect on it.
+     * @returns Tween instance
      */
     ATween.prototype.retain = function () {
         this._retain = true;
@@ -478,12 +494,14 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Determine whether the tween is keeping.
+     * @returns Tween instance
      */
     ATween.prototype.isRetain = function () {
         return this._retain;
     };
     /**
      * Release the retain tween.
+     * @returns Tween instance
      */
     ATween.prototype.release = function () {
         this._retain = false;
@@ -491,6 +509,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set interpolation function.
+     * @returns Tween instance
      */
     ATween.prototype.interpolation = function (callback) {
         this._interpolation = callback;
@@ -498,6 +517,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set the callback function when the tween start.
+     * @returns Tween instance
      */
     ATween.prototype.onStart = function (callback) {
         this._onStartCallback = callback;
@@ -505,6 +525,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set the callback function when the tween's value has updated.
+     * @returns Tween instance
      */
     ATween.prototype.onUpdate = function (callback) {
         this._onUpdateCallback = callback;
@@ -512,6 +533,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set the callback function when the tween is completed.
+     * @returns Tween instance
      */
     ATween.prototype.onComplete = function (callback, params) {
         if (params === void 0) { params = null; }
@@ -524,6 +546,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set the callback function when the tween is canceled.
+     * @returns Tween instance
      */
     ATween.prototype.onCancel = function (callback) {
         this._onCancelCallback = callback;
@@ -531,6 +554,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set the callback function when the tween is repeated.
+     * @returns Tween instance
      */
     ATween.prototype.onRepeat = function (callback) {
         this._onRepeatCallback = callback;

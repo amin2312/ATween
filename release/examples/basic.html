@@ -17,7 +17,7 @@
 
     button {
         padding: 0px;
-        margin: 0px;
+        margin: 5px;
     }
 
     table {
@@ -27,7 +27,7 @@
 
     td {
         border: 1px #000 solid;
-        padding: 10px;
+        padding: 5px;
     }
 
     #main {
@@ -72,7 +72,7 @@
     }
 
     #TestTable button {
-        padding: 5px;
+        padding: 3px;
         font-size: 2rem;
     }
 
@@ -83,18 +83,22 @@
     .shine2 {
         background-color: #090;
     }
+
+    .shine3 {
+        background-color: #F00;
+    }
 </style>
 
 <body>
-    <br />
     <div id="main">
+        <div style="line-height: 60px; font-size:2rem; font-weight: bold; text-align: center;">ATween basic examples</div>
         <table id="TestTable">
             <thead>
                 <tr>
                     <td>Test</td>
                     <td>Method</td>
                     <td>Target</td>
-                    <td>Button</td>
+                    <td>Operation</td>
                 </tr>
             </thead>
             <tbody>
@@ -104,7 +108,7 @@
                     <td>
                         <div id="a1" class="box50"></div>
                     </td>
-                    <td><button onclick="a1('a1')">Start</button></td>
+                    <td><button onclick="a1('a1')">start</button></td>
                 </tr>
                 <tr>
                     <td>a2</td>
@@ -112,15 +116,23 @@
                     <td>
                         <div id="a2" class="box50"></div>
                     </td>
-                    <td><button onclick="a2('a2')">Start</button></td>
+                    <td><button onclick="a2('a2')">start</button></td>
                 </tr>
                 <tr>
                     <td>a3</td>
-                    <td>to (2D)</td>
-                    <td style="height: 100px; vertical-align: top;">
+                    <td>to+cancel</td>
+                    <td>
                         <div id="a3" class="box50"></div>
                     </td>
-                    <td><button onclick="a3('a3')">Start</button></td>
+                    <td><button onclick="a3_a('a3')">start</button>&nbsp;<button onclick="a3_b('a3')">cancel</button></td>
+                </tr>
+                <tr>
+                    <td>a4</td>
+                    <td>to (2D)</td>
+                    <td style="height: 100px; vertical-align: top;">
+                        <div id="a4" class="box50"></div>
+                    </td>
+                    <td><button onclick="a4('a4')">start</button></td>
                 </tr>
                 <tr>
                     <td>b1</td>
@@ -128,7 +140,7 @@
                     <td>
                         <div id="b1" class="box50"></div>
                     </td>
-                    <td><button onclick="b1('b1')">Start</button></td>
+                    <td><button onclick="b1('b1')">start</button></td>
                 </tr>
                 <tr>
                     <td>b2</td>
@@ -136,7 +148,7 @@
                     <td>
                         <div id="b2" class="box50"></div>
                     </td>
-                    <td><button onclick="b2('b2')">Start</button></td>
+                    <td><button onclick="b2('b2')">start</button></td>
                 </tr>
                 <tr>
                     <td>b3</td>
@@ -144,7 +156,7 @@
                     <td>
                         <div id="b3" class="box50"></div>
                     </td>
-                    <td><button onclick="b3('b3')">Start</button></td>
+                    <td><button onclick="b3('b3')">start</button></td>
                 </tr>
                 <tr>
                     <td>c1</td>
@@ -152,7 +164,7 @@
                     <td>
                         <div id="c1" class="box50"></div>
                     </td>
-                    <td><button onclick="c1_a('c1')">Start</button>&nbsp;<button onclick="c1_b('c1')">Stop</button></td>
+                    <td><button onclick="c1_a('c1')">start</button>&nbsp;<button onclick="c1_b('c1')">stop</button></td>
                 </tr>
                 <tr>
                     <td>d1</td>
@@ -162,7 +174,7 @@
                         <div id="d1b" class="box50" style="margin-bottom: 5px;"></div>
                         <div id="d1c" class="box50"></div>
                     </td>
-                    <td><button onclick="d1_a('d1')">Start</button>&nbsp;<button onclick="d1_b('d1')">KillAlL</button></td>
+                    <td><button onclick="d1_a('d1')">start</button><br /><button onclick="d1_b('d1')">kill 1</button><br /><button onclick="d1_c('d1')">kill all</button></td>
                 </tr>
                 <tr>
                     <td>e1</td>
@@ -174,7 +186,31 @@
                     <td>
                         <div id="e1" class="box50"></div>
                     </td>
-                    <td><button onclick="e1('e1')">Start</button></td>
+                    <td><button onclick="e1('e1')">start</button></td>
+                </tr>
+                <tr>
+                    <td>f1</td>
+                    <td>timer</td>
+                    <td>
+                        <div id="f1"></div>
+                    </td>
+                    <td><button onclick="f1('f1')">start</button></td>
+                </tr>
+                <tr>
+                    <td>f2</td>
+                    <td>infinite timer+cancel</td>
+                    <td>
+                        <div id="f2"></div>
+                    </td>
+                    <td><button onclick="f2_a('f2')">start</button>&nbsp;<button onclick="f2_b('f2')">cancel</button></td>
+                </tr>
+                <tr>
+                    <td>f3</td>
+                    <td>once timer</td>
+                    <td>
+                        <div id="f3"></div>
+                    </td>
+                    <td><button onclick="f3('f3')">start</button></td>
                 </tr>
             </tbody>
         </table>
@@ -183,4 +219,4 @@
 
 </html>
 <script src="../ATween.js"></script>
-<script src="usual.js"></script>
+<script src="basic.js"></script>

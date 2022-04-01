@@ -55,8 +55,8 @@ class ATween
     private _isCompleted = false;
     private _pause: boolean = false;
     private _retain: boolean = false;
-    private _easing: (k: number) => number = ATweenEasingLinear.None;
-    private _interpolation: (v: Array<any>, k: number) => number = ATweenInterpolation.Linear;
+    private _easing: (k: number) => number = ATEasingLinear.None;
+    private _interpolation: (v: Array<any>, k: number) => number = ATInterpolation.Linear;
     /**
      * The callback functions.
      **/
@@ -125,26 +125,31 @@ class ATween
         }
     }
     /**
-     * Kill all tweens of indicated target.
-     * @param target The tween target object. 
+     * Kill all tweens of indicated target or sync object.
+     * @param target As name mean.
      * @param withComplete Indicates whether to call complete function.
+     * @returns Number of killed instances
      */
-    public static killTweens(target: any, withComplete: boolean = false): void
+    public static killTweens(targetOrSyncObject: any, withComplete: boolean = false): number
     {
         var clone = ATween._instances.concat([]);
         var len = clone.length;
+        var num = 0;
         for (var i = 0; i < len; i++)
         {
             var ins = clone[i];
-            if (ins._target == target)
+            if (ins._target == targetOrSyncObject || ins._synObj == targetOrSyncObject)
             {
                 ins.cancel(withComplete);
+                num++;
             }
         }
+        return num;
     }
     /**
      * Check the target is tweening.
-     * @param target The tween target object. 
+     * @param target As name mean. 
+     * @returns The result.
      */
     public static isTweening(target: any): boolean
     {
@@ -192,9 +197,12 @@ class ATween
     }
     /**
      * Create a tween.
+     * @remarks
+     * Don't reuse the tween instance, it's one-time
      * @param target It must be a object. 
      * @param durationMs set duration, not including any repeats or delays.
      * @param delayMs set initial delay which is the length of time in ms before the animation should begin.
+     * @returns Tween instance
      */
     public static newTween(target: any, durationMs: number, delayMs: number = 0): ATween
     {
@@ -205,43 +213,46 @@ class ATween
         return t;
     }
     /**
-     * Create a timer.
-     * @param delayMs The triggered delay time.
+     * Create a once timer.
+     * @remarks
+     * Don't reuse the tween instance, it's one-time
+     * @param intervalMs As name mean(unit:ms)
      * @param onCompleteCallback The callback function when complete.
      * @param onCompleteParams The callback parameters(array) when complete.
+     * @returns Tween instance
      */
-    public static newTimer(delayMs: number, onCompleteCallback: any, onCompleteParams: Array<any> = null): ATween
+    public static newOnce(intervalMs: number, onCompleteCallback: any, onCompleteParams: Array<any> = null): ATween
     {
         ATween.checkInstalled();
         var t = new ATween(null);
-        t._delayMs = delayMs;
+        t._delayMs = intervalMs;
         t.onComplete(onCompleteCallback, onCompleteParams);
-        t.start();
         return t;
     }
     /**
-     * Create a repeat timer.
+     * Create a timer.
      * @remarks
-     * When you user onRepeatCallback parameter, It wiil take back the time count, if return false, then will cancel this timer.
-     * @param delayMs The triggered delay time.
-     * @param repeatTimes Repeat Times.
-     * @param onRepeatCallback The callback parameters when repeat.
+     * Don't reuse the tween instance, it's one-time
+     * @param intervalMs As name mean(unit:ms)
+     * @param times Repeat Times(-1 is infinity)
+     * @param onRepeatCallback  if return false, then will cancel this timer.
      * @param onCompleteCallback The callback function when complete.
      * @param onCompleteParams The callback parameters(array) when complete.
+     * @returns Tween instance
      **/
-    public static newRepeat(delayMs: number, repeatTimes: number, onRepeatCallback: (times: number) => boolean, onCompleteCallback: any = null, onCompleteParams: Array<any> = null): ATween
+    public static newTimer(intervalMs: number, times: number, onRepeatCallback: (steps: number) => boolean, onCompleteCallback: any = null, onCompleteParams: Array<any> = null): ATween
     {
         ATween.checkInstalled();
         var t = new ATween(null);
-        t._delayMs = delayMs;
-        t.repeat(repeatTimes);
+        t._delayMs = intervalMs;
+        t.repeat(times);
         t.onRepeat(onRepeatCallback);
         t.onComplete(onCompleteCallback, onCompleteParams);
-        t.start();
         return t;
     }
     /**
      * Start the tween/timer.
+     * @returns Tween instance
      */
     public start(): ATween
     {
@@ -398,13 +409,10 @@ class ATween
         // end processing
         if (this.elapsedPercent == 1)
         {
-            if (this._repeatRefs > 0)
+            if (this._repeatRefs != 0)
             {
                 this._repeatSteps++;
-                if (isFinite(this._repeatRefs) == true)
-                {
-                    this._repeatRefs--;
-                }
+                this._repeatRefs--;
                 // reset target properties
                 if (this._target != null)
                 {
@@ -427,13 +435,13 @@ class ATween
                 if (this._onRepeatCallback != null)
                 {
                     var cbR = this._onRepeatCallback;
-                    if (cbR.call(null, this._repeatSteps) == false)
+                    if (cbR.call(null, this._repeatSteps) === false)
                     {
                         this._repeatRefs = 0;
                     }
                 }
             }
-            if (this._repeatRefs <= 0)
+            if (this._repeatRefs == 0)
             {
                 this._isCompleted = true;
                 // [Callback Handler]
@@ -451,16 +459,18 @@ class ATween
     /**
      * Cancel.
      * @param withComplete indicate that whether call complete function.
+     * @returns Tween instance
      */
-    public cancel(withComplete: boolean = false)
+    public cancel(withComplete: boolean = false): void
     {
         if (this._isCompleted == true || this._retain == true)
         {
-            return this;
+            return;
         }
+        this._repeatRefs = 0;
         if (withComplete == true)
         {
-            this.update(this._startMs + this._delayMs + this._durationMs);
+            this.update(0x7FFFFFFF);
         }
         ATween._del(this);
         this._isCompleted = true;
@@ -470,7 +480,6 @@ class ATween
             var cb = this._onCancelCallback;
             cb();
         }
-        return this;
     }
     /**
      * Pause.
@@ -486,6 +495,7 @@ class ATween
     /**
      * The destination value that the target wants to achieve.
      * @param endValus destination values.
+     * @returns Tween instance
      */
     public to(endValus: any): ATween
     {
@@ -493,10 +503,11 @@ class ATween
         return this;
     }
     /**
-     * Sync new value to HTMLElement style property.
+     * Sync the new value to HTMLElement style property.
      * @remarks
-     * Thie method only exist js version and browse env.
+     * This method only adapts to the browser environment.
      * @param obj HTMLElement or element id
+     * @returns Tween instance
      */
     public sync(obj: HTMLElement | string, unit: string = 'px'): ATween
     {
@@ -518,6 +529,7 @@ class ATween
      * @param times As name mean
      * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
      * @param delayMs delay trigger(unit ms).
+     * @returns Tween instance
      */
     public repeat(times: number, yoyo: boolean = false, delayMs: number = 0): ATween
     {
@@ -531,6 +543,7 @@ class ATween
      * Immediate call the repeat function.
      * @remark
      * You need init the env in sometimes, then it's a good choice.
+     * @returns Tween instance
      */
     public callRepeat(): ATween
     {
@@ -549,14 +562,16 @@ class ATween
     }
     /**
      * Set easing function.
+     * @returns Tween instance
      */
-    public easing(func: (v: number) => number)
+    public easing(func: (v: number) => number): ATween
     {
         this._easing = func;
         return this;
     }
     /**
      * Keep this tween, killAll has no effect on it.
+     * @returns Tween instance
      */
     public retain(): ATween
     {
@@ -565,6 +580,7 @@ class ATween
     }
     /**
      * Determine whether the tween is keeping.
+     * @returns Tween instance
      */
     public isRetain(): boolean
     {
@@ -572,6 +588,7 @@ class ATween
     }
     /**
      * Release the retain tween.
+     * @returns Tween instance
      */
     public release(): ATween
     {
@@ -580,14 +597,16 @@ class ATween
     }
     /**
      * Set interpolation function.
+     * @returns Tween instance
      */
-    public interpolation(callback: (v: Array<any>, k: number) => number)
+    public interpolation(callback: (v: Array<any>, k: number) => number): ATween
     {
         this._interpolation = callback;
         return this;
     }
     /**
      * Set the callback function when the tween start.
+     * @returns Tween instance
      */
     public onStart(callback: () => void): ATween
     {
@@ -596,6 +615,7 @@ class ATween
     }
     /**
      * Set the callback function when the tween's value has updated.
+     * @returns Tween instance
      */
     public onUpdate(callback: (percent: number, times: number) => void): ATween
     {
@@ -604,6 +624,7 @@ class ATween
     }
     /**
      * Set the callback function when the tween is completed.
+     * @returns Tween instance
      */
     public onComplete(callback: (...argArray: any[]) => void, params: Array<any> = null): ATween
     {
@@ -617,6 +638,7 @@ class ATween
     }
     /**
      * Set the callback function when the tween is canceled.
+     * @returns Tween instance
      */
     public onCancel(callback: () => void): ATween
     {
@@ -625,17 +647,18 @@ class ATween
     }
     /**
      * Set the callback function when the tween is repeated.
+     * @returns Tween instance
      */
-    public onRepeat(callback: (times: number) => boolean): ATween
+    public onRepeat(callback: (steps: number) => boolean): ATween
     {
         this._onRepeatCallback = callback;
         return this;
     }
 }
 /**
- * Tween Easing Type - Linear.
+ * Tween Easing - Linear.
  */
-class ATweenEasingLinear
+class ATEasingLinear
 {
     public static None(k: number): number
     {
@@ -643,9 +666,9 @@ class ATweenEasingLinear
     }
 }
 /**
- * Tween Easing Type - Quadratic.
+ * Tween Easing - Quadratic.
  */
-class ATweenEasingQuadratic
+class ATEasingQuadratic
 {
     public static In(k: number): number
     {
@@ -665,9 +688,9 @@ class ATweenEasingQuadratic
     }
 }
 /**
- * Tween Easing Type - Cubic.
+ * Tween Easing - Cubic.
  */
-class ATweenEasingCubic
+class ATEasingCubic
 {
     public static In(k: number): number
     {
@@ -687,9 +710,9 @@ class ATweenEasingCubic
     }
 }
 /**
- * Tween Easing Type - Quartic.
+ * Tween Easing - Quartic.
  */
-class ATweenEasingQuartic
+class ATEasingQuartic
 {
     public static In(k: number): number
     {
@@ -709,9 +732,9 @@ class ATweenEasingQuartic
     }
 }
 /**
- * Tween Easing Type - Quintic.
+ * Tween Easing - Quintic.
  */
-class ATweenEasingQuintic
+class ATEasingQuintic
 {
     public static In(k: number): number
     {
@@ -731,9 +754,9 @@ class ATweenEasingQuintic
     }
 }
 /**
- * Tween Easing Type - Sinusoidal.
+ * Tween Easing - Sinusoidal.
  */
-class ATweenEasingSinusoidal
+class ATEasingSinusoidal
 {
     public static In(k: number): number
     {
@@ -749,9 +772,9 @@ class ATweenEasingSinusoidal
     }
 }
 /**
- * Tween Easing Type - Exponential.
+ * Tween Easing - Exponential.
  */
-class ATweenEasingExponential
+class ATEasingExponential
 {
     public static In(k: number): number
     {
@@ -779,9 +802,9 @@ class ATweenEasingExponential
     }
 }
 /**
- * Tween Easing Type - Circular.
+ * Tween Easing - Circular.
  */
-class ATweenEasingCircular
+class ATEasingCircular
 {
     public static In(k: number): number
     {
@@ -801,9 +824,9 @@ class ATweenEasingCircular
     }
 }
 /**
- * Tween Easing Type - Elastic.
+ * Tween Easing - Elastic.
  */
-class ATweenEasingElastic
+class ATEasingElastic
 {
     public static In(k: number): number
     {
@@ -848,9 +871,9 @@ class ATweenEasingElastic
     }
 }
 /**
- * Tween Easing Type - Back.
+ * Tween Easing - Back.
  */
-class ATweenEasingBack
+class ATEasingBack
 {
     public static In(k: number): number
     {
@@ -873,13 +896,13 @@ class ATweenEasingBack
     }
 }
 /**
- * Tween Easing Type - Bounce.
+ * Tween Easing - Bounce.
  */
-class ATweenEasingBounce
+class ATEasingBounce
 {
     public static In(k: number): number
     {
-        return 1 - ATweenEasingBounce.Out(1 - k);
+        return 1 - ATEasingBounce.Out(1 - k);
     }
     public static Out(k: number): number
     {
@@ -904,22 +927,22 @@ class ATweenEasingBounce
     {
         if (k < 0.5)
         {
-            return ATweenEasingBounce.In(k * 2) * 0.5;
+            return ATEasingBounce.In(k * 2) * 0.5;
         }
-        return ATweenEasingBounce.Out(k * 2 - 1) * 0.5 + 0.5;
+        return ATEasingBounce.Out(k * 2 - 1) * 0.5 + 0.5;
     }
 }
 /**
  * Tween Interpolation.
  */
-class ATweenInterpolation
+class ATInterpolation
 {
     public static Linear(v: Array<any>, k: number): number
     {
         var m = v.length - 1;
         var f = m * k;
         var i = Math.floor(f);
-        var fn = ATweenInterpolationUtils.Linear;
+        var fn = ATInterpolationUtils.Linear;
         if (k < 0)
         {
             return fn(v[0], v[1], f);
@@ -935,7 +958,7 @@ class ATweenInterpolation
         var b: number = 0;
         var n = v.length - 1;
         var pw = Math.pow;
-        var bn = ATweenInterpolationUtils.Bernstein;
+        var bn = ATInterpolationUtils.Bernstein;
         for (var i = 0; i < n; i++)
         {
             b += pw(1 - k, n - i) * pw(k, i) * v[i] * bn(n, i);
@@ -947,7 +970,7 @@ class ATweenInterpolation
         var m = v.length - 1;
         var f = m * k;
         var i = Math.floor(f);
-        var fn = ATweenInterpolationUtils.CatmullRom;
+        var fn = ATInterpolationUtils.CatmullRom;
         if (v[0] == v[m])
         {
             if (k < 0)
@@ -973,7 +996,7 @@ class ATweenInterpolation
 /**
  * Tween Interpolation Utils.
  */
-class ATweenInterpolationUtils
+class ATInterpolationUtils
 {
     private static a = [1];
     public static Linear(p0: number, p1: number, t: number): number
@@ -982,15 +1005,15 @@ class ATweenInterpolationUtils
     }
     public static Bernstein(n: number, i: number): number
     {
-        var fc = ATweenInterpolationUtils.Factorial;
+        var fc = ATInterpolationUtils.Factorial;
         return fc(n) / fc(i) / fc(n - i);
     }
     public static Factorial(n: number): number
     {
         var s: number = 1;
-        if (ATweenInterpolationUtils.a[n] != 0)
+        if (ATInterpolationUtils.a[n] != 0)
         {
-            return ATweenInterpolationUtils.a[n];
+            return ATInterpolationUtils.a[n];
         }
         var i = n;
         while (i > 1)
@@ -998,7 +1021,7 @@ class ATweenInterpolationUtils
             s *= i;
             i--;
         }
-        ATweenInterpolationUtils.a[n] = s;
+        ATInterpolationUtils.a[n] = s;
         return s;
     }
     public static CatmullRom(p0: number, p1: number, p2: number, p3: number, t: number): number

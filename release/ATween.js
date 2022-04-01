@@ -20,29 +20,30 @@ var ATween = /** @class */ (function () {
          * Elapsed percent of tween(unit: millisecond).
          **/
         this.elapsedPercent = 0;
+        this._initedTarget = false;
+        this._syncObj = null;
+        this._syncCnv = null;
+        this._attachment = null;
         this._repeatNextStartMs = 0;
-        this._repeatTimes = 0;
         this._repeatRefs = 0; // references, reference count
         this._repeatSteps = 0;
         this._repeatDelayMs = 0;
+        this._updateSteps = 0;
         this._startMs = 0;
         this._delayMs = 0;
         this._durationMs = 1;
-        this._onStartCallbackFired = false;
-        this._initedTarget = false;
-        this._synObj = null;
-        this._synSfx = null;
-        this._updateSteps = 0;
+        this._repeatTimes = 0;
         this._yoyo = false;
         this._isCompleted = false;
         this._pause = false;
         this._retain = false;
-        this._easing = ATweenEasingLinear.None;
+        this._easing = ATweenEasing.Linear;
         this._interpolation = ATweenInterpolation.Linear;
         /**
          * The callback functions.
          **/
         this._onStartCallback = null;
+        this._onStartCallbackFired = false;
         this._onUpdateCallback = null;
         this._onCancelCallback = null;
         this._onCompleteCallback = null;
@@ -79,7 +80,7 @@ var ATween = /** @class */ (function () {
         var len = clone.length;
         for (var i = 0; i < len; i++) {
             var ins = clone[i];
-            if (ins.pause == false && ins.update(ms) == false) {
+            if (ins._pause == false && ins.update(ms) == false) {
                 ATween._del(ins);
             }
         }
@@ -112,7 +113,7 @@ var ATween = /** @class */ (function () {
         var num = 0;
         for (var i = 0; i < len; i++) {
             var ins = clone[i];
-            if (ins._target == targetOrSyncObject || ins._synObj == targetOrSyncObject) {
+            if (ins._target == targetOrSyncObject || ins._syncObj == targetOrSyncObject) {
                 ins.cancel(withComplete);
                 num++;
             }
@@ -287,8 +288,12 @@ var ATween = /** @class */ (function () {
                     newVal = startVal + (endVal - startVal) * ePercent;
                 }
                 this._target[property] = newVal;
-                if (this._synObj != null) {
-                    this._synObj.style.setProperty(property, newVal + this._synSfx);
+                if (this._syncObj != null) {
+                    var cnvVal = newVal;
+                    if (this._syncCnv != null) {
+                        cnvVal = this._syncCnv(newVal);
+                    }
+                    this._syncObj.style.setProperty(property, cnvVal);
                 }
             }
             else {
@@ -299,7 +304,7 @@ var ATween = /** @class */ (function () {
         if (ignoreCallback == false && this._onUpdateCallback != null) {
             this._updateSteps++;
             var cb = this._onUpdateCallback;
-            cb.call(null, percent, this._updateSteps);
+            cb.call(this, percent, this._updateSteps);
         }
     };
     /**
@@ -327,7 +332,7 @@ var ATween = /** @class */ (function () {
             this._onStartCallbackFired = true;
             if (this._onStartCallback != null) {
                 var cbS = this._onStartCallback;
-                cbS();
+                cbS.call(this);
             }
         }
         // update values
@@ -360,7 +365,7 @@ var ATween = /** @class */ (function () {
                 // [Callback Handler]
                 if (this._onRepeatCallback != null) {
                     var cbR = this._onRepeatCallback;
-                    if (cbR.call(null, this._repeatSteps) === false) {
+                    if (cbR.call(this, this._repeatSteps) === false) {
                         this._repeatRefs = 0;
                     }
                 }
@@ -370,7 +375,7 @@ var ATween = /** @class */ (function () {
                 // [Callback Handler]
                 if (this._onCompleteCallback != null) {
                     var cbC = this._onCompleteCallback;
-                    cbC.apply(null, this._onCompleteParams);
+                    cbC.apply(this, this._onCompleteParams);
                 }
                 return false;
             }
@@ -397,22 +402,9 @@ var ATween = /** @class */ (function () {
         // [取消回调]
         if (this._onCancelCallback != null) {
             var cb = this._onCancelCallback;
-            cb();
+            cb.call(this);
         }
     };
-    Object.defineProperty(ATween.prototype, "pause", {
-        get: function () {
-            return this._pause;
-        },
-        /**
-         * Pause.
-         */
-        set: function (v) {
-            this._pause = v;
-        },
-        enumerable: false,
-        configurable: true
-    });
     /**
      * The destination value that the target wants to achieve.
      * @param endValus destination values.
@@ -427,10 +419,11 @@ var ATween = /** @class */ (function () {
      * @remarks
      * This method only adapts to the browser environment.
      * @param obj HTMLElement or element id
+     * @param convert the tween value convertor of ojb(like number to RGB, to px unit)
      * @returns Tween instance
      */
-    ATween.prototype.sync = function (obj, unit) {
-        if (unit === void 0) { unit = 'px'; }
+    ATween.prototype.sync = function (obj, convert) {
+        if (convert === void 0) { convert = ATweenConvertor.def; }
         var t;
         if (obj instanceof HTMLElement) {
             t = obj;
@@ -438,8 +431,15 @@ var ATween = /** @class */ (function () {
         else {
             t = document.getElementById(obj);
         }
-        this._synObj = t;
-        this._synSfx = unit;
+        this._syncObj = t;
+        this._syncCnv = convert;
+        return this;
+    };
+    /**
+     * Attah a object.
+     */
+    ATween.prototype.attah = function (obj) {
+        this._attachment = obj;
         return this;
     };
     /**
@@ -471,12 +471,6 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Get repeat times.
-     */
-    ATween.prototype.getRepeatTimes = function () {
-        return this._repeatTimes;
-    };
-    /**
      * Set easing function.
      * @returns Tween instance
      */
@@ -493,13 +487,6 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Determine whether the tween is keeping.
-     * @returns Tween instance
-     */
-    ATween.prototype.isRetain = function () {
-        return this._retain;
-    };
-    /**
      * Release the retain tween.
      * @returns Tween instance
      */
@@ -514,6 +501,46 @@ var ATween = /** @class */ (function () {
     ATween.prototype.interpolation = function (callback) {
         this._interpolation = callback;
         return this;
+    };
+    /**
+     * Determine whether the tween is keeping.
+     * @returns Tween instance
+     */
+    ATween.prototype.isRetain = function () {
+        return this._retain;
+    };
+    /**
+     * Pause.
+     */
+    ATween.prototype.setPause = function (v) {
+        this._pause = v;
+    };
+    ATween.prototype.getPause = function () {
+        return this._pause;
+    };
+    /**
+     * Get repeat times.
+     */
+    ATween.prototype.getRepeatTimes = function () {
+        return this._repeatTimes;
+    };
+    /**
+     * Get target.
+     */
+    ATween.prototype.getTarget = function () {
+        return this._target;
+    };
+    /**
+     * Get sync object.
+     */
+    ATween.prototype.getSyncObject = function () {
+        return this._syncObj;
+    };
+    /**
+     * Get attachment.
+     */
+    ATween.prototype.getAttachment = function () {
+        return this._attachment;
     };
     /**
      * Set the callback function when the tween start.
@@ -575,126 +602,123 @@ var ATween = /** @class */ (function () {
     return ATween;
 }());
 /**
- * Tween Easing Type - Linear.
+ * Tween Sync Value Convertor.
  */
-var ATweenEasingLinear = /** @class */ (function () {
-    function ATweenEasingLinear() {
+var ATweenConvertor = /** @class */ (function () {
+    function ATweenConvertor() {
     }
-    ATweenEasingLinear.None = function (k) {
-        return k;
+    /**
+     * Default convert function
+     */
+    ATweenConvertor.def = function (v) {
+        return v + 'px';
     };
-    return ATweenEasingLinear;
+    /**
+     * RGB convert function
+     */
+    ATweenConvertor.rgb = function (v) {
+        var s = Math.round(v).toString(16);
+        for (var i = s.length; i < 6; i++) {
+            s = '0' + s;
+        }
+        return "#" + s;
+    };
+    return ATweenConvertor;
 }());
 /**
- * Tween Easing Type - Quadratic.
+ * Tween Easing.
  */
-var ATweenEasingQuadratic = /** @class */ (function () {
-    function ATweenEasingQuadratic() {
+var ATweenEasing = /** @class */ (function () {
+    function ATweenEasing() {
     }
-    ATweenEasingQuadratic.In = function (k) {
+    /**
+     * Linear
+     */
+    ATweenEasing.Linear = function (k) {
+        return k;
+    };
+    /**
+     * Quadratic
+     */
+    ATweenEasing.QuadraticIn = function (k) {
         return k * k;
     };
-    ATweenEasingQuadratic.Out = function (k) {
+    ATweenEasing.QuadraticOut = function (k) {
         return k * (2 - k);
     };
-    ATweenEasingQuadratic.InOut = function (k) {
+    ATweenEasing.QuadraticInOut = function (k) {
         if ((k *= 2) < 1) {
             return 0.5 * k * k;
         }
         return -0.5 * (--k * (k - 2) - 1);
     };
-    return ATweenEasingQuadratic;
-}());
-/**
- * Tween Easing Type - Cubic.
- */
-var ATweenEasingCubic = /** @class */ (function () {
-    function ATweenEasingCubic() {
-    }
-    ATweenEasingCubic.In = function (k) {
+    /**
+     * Cubic
+     */
+    ATweenEasing.CubicIn = function (k) {
         return k * k * k;
     };
-    ATweenEasingCubic.Out = function (k) {
+    ATweenEasing.CubicOut = function (k) {
         return --k * k * k + 1;
     };
-    ATweenEasingCubic.InOut = function (k) {
+    ATweenEasing.CubicInOut = function (k) {
         if ((k *= 2) < 1) {
             return 0.5 * k * k * k;
         }
         return 0.5 * ((k -= 2) * k * k + 2);
     };
-    return ATweenEasingCubic;
-}());
-/**
- * Tween Easing Type - Quartic.
- */
-var ATweenEasingQuartic = /** @class */ (function () {
-    function ATweenEasingQuartic() {
-    }
-    ATweenEasingQuartic.In = function (k) {
+    /**
+     * Quartic.
+     */
+    ATweenEasing.QuarticIn = function (k) {
         return k * k * k * k;
     };
-    ATweenEasingQuartic.Out = function (k) {
+    ATweenEasing.QuarticOut = function (k) {
         return 1 - (--k * k * k * k);
     };
-    ATweenEasingQuartic.InOut = function (k) {
+    ATweenEasing.QuarticInOut = function (k) {
         if ((k *= 2) < 1) {
             return 0.5 * k * k * k * k;
         }
         return -0.5 * ((k -= 2) * k * k * k - 2);
     };
-    return ATweenEasingQuartic;
-}());
-/**
- * Tween Easing Type - Quintic.
- */
-var ATweenEasingQuintic = /** @class */ (function () {
-    function ATweenEasingQuintic() {
-    }
-    ATweenEasingQuintic.In = function (k) {
+    /**
+     * Quintic.
+     */
+    ATweenEasing.QuinticIn = function (k) {
         return k * k * k * k * k;
     };
-    ATweenEasingQuintic.Out = function (k) {
+    ATweenEasing.QuinticOut = function (k) {
         return --k * k * k * k * k + 1;
     };
-    ATweenEasingQuintic.InOut = function (k) {
+    ATweenEasing.QuinticInOut = function (k) {
         if ((k *= 2) < 1) {
             return 0.5 * k * k * k * k * k;
         }
         return 0.5 * ((k -= 2) * k * k * k * k + 2);
     };
-    return ATweenEasingQuintic;
-}());
-/**
- * Tween Easing Type - Sinusoidal.
- */
-var ATweenEasingSinusoidal = /** @class */ (function () {
-    function ATweenEasingSinusoidal() {
-    }
-    ATweenEasingSinusoidal.In = function (k) {
+    /**
+     * Sinusoidal.
+     */
+    ATweenEasing.SinusoidalIn = function (k) {
         return 1 - Math.cos(k * Math.PI / 2);
     };
-    ATweenEasingSinusoidal.Out = function (k) {
+    ATweenEasing.SinusoidalOut = function (k) {
         return Math.sin(k * Math.PI / 2);
     };
-    ATweenEasingSinusoidal.InOut = function (k) {
+    ATweenEasing.SinusoidalInOut = function (k) {
         return 0.5 * (1 - Math.cos(Math.PI * k));
     };
-    return ATweenEasingSinusoidal;
-}());
-/**
- * Tween Easing Type - Exponential.
- */
-var ATweenEasingExponential = /** @class */ (function () {
-    function ATweenEasingExponential() {
-    }
-    ATweenEasingExponential.In = function (k) {
+    /**
+     * Exponential.
+     */
+    ATweenEasing.ExponentialIn = function (k) {
         return k == 0 ? 0 : Math.pow(1024, k - 1);
     };
-    ATweenEasingExponential.Out = function (k) {
+    ATweenEasing.ExponentialOut = function (k) {
         return k == 1 ? 1 : 1 - Math.pow(2, -10 * k);
     };
-    ATweenEasingExponential.InOut = function (k) {
+    ATweenEasing.ExponentialInOut = function (k) {
         if (k == 0) {
             return 0;
         }
@@ -706,35 +730,25 @@ var ATweenEasingExponential = /** @class */ (function () {
         }
         return 0.5 * (-Math.pow(2, -10 * (k - 1)) + 2);
     };
-    return ATweenEasingExponential;
-}());
-/**
- * Tween Easing Type - Circular.
- */
-var ATweenEasingCircular = /** @class */ (function () {
-    function ATweenEasingCircular() {
-    }
-    ATweenEasingCircular.In = function (k) {
+    /**
+     * Circular.
+     */
+    ATweenEasing.CircularIn = function (k) {
         return 1 - Math.sqrt(1 - k * k);
     };
-    ATweenEasingCircular.Out = function (k) {
+    ATweenEasing.CircularOut = function (k) {
         return Math.sqrt(1 - (--k * k));
     };
-    ATweenEasingCircular.InOut = function (k) {
+    ATweenEasing.CircularInOut = function (k) {
         if ((k *= 2) < 1) {
             return -0.5 * (Math.sqrt(1 - k * k) - 1);
         }
         return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
     };
-    return ATweenEasingCircular;
-}());
-/**
- * Tween Easing Type - Elastic.
- */
-var ATweenEasingElastic = /** @class */ (function () {
-    function ATweenEasingElastic() {
-    }
-    ATweenEasingElastic.In = function (k) {
+    /**
+     * Elastic.
+     */
+    ATweenEasing.ElasticIn = function (k) {
         if (k == 0) {
             return 0;
         }
@@ -743,7 +757,7 @@ var ATweenEasingElastic = /** @class */ (function () {
         }
         return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
     };
-    ATweenEasingElastic.Out = function (k) {
+    ATweenEasing.ElasticOut = function (k) {
         if (k == 0) {
             return 0;
         }
@@ -752,7 +766,7 @@ var ATweenEasingElastic = /** @class */ (function () {
         }
         return Math.pow(2, -10 * k) * Math.sin((k - 0.1) * 5 * Math.PI) + 1;
     };
-    ATweenEasingElastic.InOut = function (k) {
+    ATweenEasing.ElasticInOut = function (k) {
         if (k == 0) {
             return 0;
         }
@@ -765,41 +779,31 @@ var ATweenEasingElastic = /** @class */ (function () {
         }
         return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
     };
-    return ATweenEasingElastic;
-}());
-/**
- * Tween Easing Type - Back.
- */
-var ATweenEasingBack = /** @class */ (function () {
-    function ATweenEasingBack() {
-    }
-    ATweenEasingBack.In = function (k) {
+    /**
+     * Back.
+     */
+    ATweenEasing.BackIn = function (k) {
         var s = 1.70158;
         return k * k * ((s + 1) * k - s);
     };
-    ATweenEasingBack.Out = function (k) {
+    ATweenEasing.BackOut = function (k) {
         var s = 1.70158;
         return --k * k * ((s + 1) * k + s) + 1;
     };
-    ATweenEasingBack.InOut = function (k) {
+    ATweenEasing.BackInOut = function (k) {
         var s = 1.70158 * 1.525;
         if ((k *= 2) < 1) {
             return 0.5 * (k * k * ((s + 1) * k - s));
         }
         return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
     };
-    return ATweenEasingBack;
-}());
-/**
- * Tween Easing Type - Bounce.
- */
-var ATweenEasingBounce = /** @class */ (function () {
-    function ATweenEasingBounce() {
-    }
-    ATweenEasingBounce.In = function (k) {
-        return 1 - ATweenEasingBounce.Out(1 - k);
+    /**
+     * Bounce.
+     */
+    ATweenEasing.BounceIn = function (k) {
+        return 1 - ATweenEasing.BounceOut(1 - k);
     };
-    ATweenEasingBounce.Out = function (k) {
+    ATweenEasing.BounceOut = function (k) {
         if (k < (1 / 2.75)) {
             return 7.5625 * k * k;
         }
@@ -813,13 +817,13 @@ var ATweenEasingBounce = /** @class */ (function () {
             return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375;
         }
     };
-    ATweenEasingBounce.InOut = function (k) {
+    ATweenEasing.BounceInOut = function (k) {
         if (k < 0.5) {
-            return ATweenEasingBounce.In(k * 2) * 0.5;
+            return ATweenEasing.BounceIn(k * 2) * 0.5;
         }
-        return ATweenEasingBounce.Out(k * 2 - 1) * 0.5 + 0.5;
+        return ATweenEasing.BounceOut(k * 2 - 1) * 0.5 + 0.5;
     };
-    return ATweenEasingBounce;
+    return ATweenEasing;
 }());
 /**
  * Tween Interpolation.

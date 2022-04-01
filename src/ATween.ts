@@ -32,35 +32,37 @@ class ATween
      * Params of tween.
      */
     private _target: any;
+    private _initedTarget: boolean = false;
     private _srcVals: { [key: string]: (number | number[]) };
     private _dstVals: { [key: string]: (number | number[]) };
     private _revVals: any;
 
+    private _syncObj: HTMLElement = null;
+    private _syncCnv: (v: number) => any = null;
+
+    private _attachment: any = null;
+
     private _repeatNextStartMs: number = 0;
-    private _repeatTimes: number = 0;
     private _repeatRefs: number = 0; // references, reference count
     private _repeatSteps: number = 0;
     private _repeatDelayMs: number = 0;
+    private _updateSteps: number = 0;
 
     private _startMs: number = 0;
     private _delayMs: number = 0;
     private _durationMs: number = 1;
-
-    private _onStartCallbackFired: boolean = false;
-    private _initedTarget: boolean = false;
-    private _synObj: HTMLElement = null;
-    private _synSfx: string = null;
-    private _updateSteps: number = 0;
+    private _repeatTimes: number = 0;
     private _yoyo: boolean = false;
     private _isCompleted = false;
     private _pause: boolean = false;
     private _retain: boolean = false;
-    private _easing: (k: number) => number = ATEasingLinear.None;
-    private _interpolation: (v: Array<any>, k: number) => number = ATInterpolation.Linear;
+    private _easing: (k: number) => number = ATweenEasing.Linear;
+    private _interpolation: (v: Array<any>, k: number) => number = ATweenInterpolation.Linear;
     /**
      * The callback functions.
      **/
     private _onStartCallback: () => void = null;
+    private _onStartCallbackFired: boolean = false;
     private _onUpdateCallback: (percent: number, times: number) => void = null;
     private _onCancelCallback: () => void = null;
     private _onCompleteCallback: (...argArray: any[]) => void = null;
@@ -102,7 +104,7 @@ class ATween
         for (var i = 0; i < len; i++)
         {
             var ins = clone[i];
-            if (ins.pause == false && ins.update(ms) == false)
+            if (ins._pause == false && ins.update(ms) == false)
             {
                 ATween._del(ins);
             }
@@ -138,7 +140,7 @@ class ATween
         for (var i = 0; i < len; i++)
         {
             var ins = clone[i];
-            if (ins._target == targetOrSyncObject || ins._synObj == targetOrSyncObject)
+            if (ins._target == targetOrSyncObject || ins._syncObj == targetOrSyncObject)
             {
                 ins.cancel(withComplete);
                 num++;
@@ -344,9 +346,14 @@ class ATween
                     newVal = startVal + (endVal - startVal) * ePercent;
                 }
                 this._target[property] = newVal;
-                if (this._synObj != null)
+                if (this._syncObj != null)
                 {
-                    this._synObj.style.setProperty(property, newVal + this._synSfx);
+                    var cnvVal: any = newVal;
+                    if (this._syncCnv != null)
+                    {
+                        cnvVal = this._syncCnv(newVal);
+                    }
+                    this._syncObj.style.setProperty(property, cnvVal);
                 }
             }
             else
@@ -359,7 +366,7 @@ class ATween
         {
             this._updateSteps++;
             var cb = this._onUpdateCallback;
-            cb.call(null, percent, this._updateSteps);
+            cb.call(this, percent, this._updateSteps);
         }
     }
     /**
@@ -395,7 +402,7 @@ class ATween
             if (this._onStartCallback != null)
             {
                 var cbS = this._onStartCallback;
-                cbS();
+                cbS.call(this);
             }
         }
         // update values
@@ -435,7 +442,7 @@ class ATween
                 if (this._onRepeatCallback != null)
                 {
                     var cbR = this._onRepeatCallback;
-                    if (cbR.call(null, this._repeatSteps) === false)
+                    if (cbR.call(this, this._repeatSteps) === false)
                     {
                         this._repeatRefs = 0;
                     }
@@ -448,7 +455,7 @@ class ATween
                 if (this._onCompleteCallback != null)
                 {
                     var cbC = this._onCompleteCallback;
-                    cbC.apply(null, this._onCompleteParams);
+                    cbC.apply(this, this._onCompleteParams);
                 }
                 return false;
             }
@@ -478,19 +485,8 @@ class ATween
         if (this._onCancelCallback != null)
         {
             var cb = this._onCancelCallback;
-            cb();
+            cb.call(this);
         }
-    }
-    /**
-     * Pause.
-     */
-    public set pause(v: boolean)
-    {
-        this._pause = v;
-    }
-    public get pause(): boolean
-    {
-        return this._pause;
     }
     /**
      * The destination value that the target wants to achieve.
@@ -507,9 +503,10 @@ class ATween
      * @remarks
      * This method only adapts to the browser environment.
      * @param obj HTMLElement or element id
+     * @param convert the tween value convertor of ojb(like number to RGB, to px unit)
      * @returns Tween instance
      */
-    public sync(obj: HTMLElement | string, unit: string = 'px'): ATween
+    public sync(obj: HTMLElement | string, convert: (v: number) => any = ATweenConvertor.def): ATween
     {
         var t: HTMLElement;
         if (obj instanceof HTMLElement)
@@ -520,8 +517,16 @@ class ATween
         {
             t = document.getElementById(obj);
         }
-        this._synObj = t;
-        this._synSfx = unit;
+        this._syncObj = t;
+        this._syncCnv = convert;
+        return this;
+    }
+    /**
+     * Attah a object.
+     */
+    public attah(obj: any): ATween
+    {
+        this._attachment = obj;
         return this;
     }
     /**
@@ -554,13 +559,6 @@ class ATween
         return this;
     }
     /**
-     * Get repeat times.
-     */
-    public getRepeatTimes(): number
-    {
-        return this._repeatTimes;
-    }
-    /**
      * Set easing function.
      * @returns Tween instance
      */
@@ -579,14 +577,6 @@ class ATween
         return this;
     }
     /**
-     * Determine whether the tween is keeping.
-     * @returns Tween instance
-     */
-    public isRetain(): boolean
-    {
-        return this._retain;
-    }
-    /**
      * Release the retain tween.
      * @returns Tween instance
      */
@@ -603,6 +593,53 @@ class ATween
     {
         this._interpolation = callback;
         return this;
+    }
+    /**
+     * Determine whether the tween is keeping.
+     * @returns Tween instance
+     */
+    public isRetain(): boolean
+    {
+        return this._retain;
+    }
+    /**
+     * Pause.
+     */
+    public setPause(v: boolean)
+    {
+        this._pause = v;
+    }
+    public getPause(): boolean
+    {
+        return this._pause;
+    }
+    /**
+     * Get repeat times.
+     */
+    public getRepeatTimes(): number
+    {
+        return this._repeatTimes;
+    }
+    /**
+     * Get target.
+     */
+    public getTarget(): any
+    {
+        return this._target;
+    }
+    /**
+     * Get sync object.
+     */
+    public getSyncObject(): any
+    {
+        return this._syncObj;
+    }
+    /**
+     * Get attachment.
+     */
+    public getAttachment(): any
+    {
+        return this._attachment;
     }
     /**
      * Set the callback function when the tween start.
@@ -656,29 +693,55 @@ class ATween
     }
 }
 /**
- * Tween Easing - Linear.
+ * Tween Sync Value Convertor.
  */
-class ATEasingLinear
+class ATweenConvertor
 {
-    public static None(k: number): number
+    /**
+     * Default convert function
+     */
+    public static def(v: number): any
+    {
+        return v + 'px';
+    }
+    /**
+     * RGB convert function
+     */
+    public static rgb(v: number): any
+    {
+        var s = Math.round(v).toString(16);
+        for (var i = s.length; i < 6; i++)
+        {
+            s = '0' + s;
+        }
+        return "#" + s;
+    }
+}
+
+/**
+ * Tween Easing.
+ */
+class ATweenEasing
+{
+    /**
+     * Linear
+     */
+    public static Linear(k: number): number
     {
         return k;
     }
-}
-/**
- * Tween Easing - Quadratic.
- */
-class ATEasingQuadratic
-{
-    public static In(k: number): number
+    /**
+     * Quadratic
+     */
+    public static QuadraticIn(k: number): number
     {
         return k * k;
     }
-    public static Out(k: number): number
+    public static QuadraticOut(k: number): number
     {
         return k * (2 - k);
     }
-    public static InOut(k: number): number
+    public static QuadraticInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -686,21 +749,18 @@ class ATEasingQuadratic
         }
         return -0.5 * (--k * (k - 2) - 1);
     }
-}
-/**
- * Tween Easing - Cubic.
- */
-class ATEasingCubic
-{
-    public static In(k: number): number
+    /**
+     * Cubic
+     */
+    public static CubicIn(k: number): number
     {
         return k * k * k;
     }
-    public static Out(k: number): number
+    public static CubicOut(k: number): number
     {
         return --k * k * k + 1;
     }
-    public static InOut(k: number): number
+    public static CubicInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -708,21 +768,18 @@ class ATEasingCubic
         }
         return 0.5 * ((k -= 2) * k * k + 2);
     }
-}
-/**
- * Tween Easing - Quartic.
- */
-class ATEasingQuartic
-{
-    public static In(k: number): number
+    /**
+     * Quartic.
+     */
+    public static QuarticIn(k: number): number
     {
         return k * k * k * k;
     }
-    public static Out(k: number): number
+    public static QuarticOut(k: number): number
     {
         return 1 - (--k * k * k * k);
     }
-    public static InOut(k: number): number
+    public static QuarticInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -730,21 +787,18 @@ class ATEasingQuartic
         }
         return -0.5 * ((k -= 2) * k * k * k - 2);
     }
-}
-/**
- * Tween Easing - Quintic.
- */
-class ATEasingQuintic
-{
-    public static In(k: number): number
+    /**
+     * Quintic.
+     */
+    public static QuinticIn(k: number): number
     {
         return k * k * k * k * k;
     }
-    public static Out(k: number): number
+    public static QuinticOut(k: number): number
     {
         return --k * k * k * k * k + 1;
     }
-    public static InOut(k: number): number
+    public static QuinticInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -752,39 +806,33 @@ class ATEasingQuintic
         }
         return 0.5 * ((k -= 2) * k * k * k * k + 2);
     }
-}
-/**
- * Tween Easing - Sinusoidal.
- */
-class ATEasingSinusoidal
-{
-    public static In(k: number): number
+    /**
+     * Sinusoidal.
+     */
+    public static SinusoidalIn(k: number): number
     {
         return 1 - Math.cos(k * Math.PI / 2);
     }
-    public static Out(k: number): number
+    public static SinusoidalOut(k: number): number
     {
         return Math.sin(k * Math.PI / 2);
     }
-    public static InOut(k: number): number
+    public static SinusoidalInOut(k: number): number
     {
         return 0.5 * (1 - Math.cos(Math.PI * k));
     }
-}
-/**
- * Tween Easing - Exponential.
- */
-class ATEasingExponential
-{
-    public static In(k: number): number
+    /**
+     * Exponential.
+     */
+    public static ExponentialIn(k: number): number
     {
         return k == 0 ? 0 : Math.pow(1024, k - 1);
     }
-    public static Out(k: number): number
+    public static ExponentialOut(k: number): number
     {
         return k == 1 ? 1 : 1 - Math.pow(2, -10 * k);
     }
-    public static InOut(k: number): number
+    public static ExponentialInOut(k: number): number
     {
         if (k == 0)
         {
@@ -800,21 +848,18 @@ class ATEasingExponential
         }
         return 0.5 * (-Math.pow(2, -10 * (k - 1)) + 2);
     }
-}
-/**
- * Tween Easing - Circular.
- */
-class ATEasingCircular
-{
-    public static In(k: number): number
+    /**
+     * Circular.
+     */
+    public static CircularIn(k: number): number
     {
         return 1 - Math.sqrt(1 - k * k);
     }
-    public static Out(k: number): number
+    public static CircularOut(k: number): number
     {
         return Math.sqrt(1 - (--k * k));
     }
-    public static InOut(k: number): number
+    public static CircularInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -822,13 +867,10 @@ class ATEasingCircular
         }
         return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
     }
-}
-/**
- * Tween Easing - Elastic.
- */
-class ATEasingElastic
-{
-    public static In(k: number): number
+    /**
+     * Elastic.
+     */
+    public static ElasticIn(k: number): number
     {
         if (k == 0)
         {
@@ -840,7 +882,7 @@ class ATEasingElastic
         }
         return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
     }
-    public static Out(k: number): number
+    public static ElasticOut(k: number): number
     {
         if (k == 0)
         {
@@ -852,7 +894,7 @@ class ATEasingElastic
         }
         return Math.pow(2, -10 * k) * Math.sin((k - 0.1) * 5 * Math.PI) + 1;
     }
-    public static InOut(k: number): number
+    public static ElasticInOut(k: number): number
     {
         if (k == 0)
         {
@@ -869,23 +911,20 @@ class ATEasingElastic
         }
         return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
     }
-}
-/**
- * Tween Easing - Back.
- */
-class ATEasingBack
-{
-    public static In(k: number): number
+    /**
+     * Back.
+     */
+    public static BackIn(k: number): number
     {
         var s = 1.70158;
         return k * k * ((s + 1) * k - s);
     }
-    public static Out(k: number): number
+    public static BackOut(k: number): number
     {
         var s = 1.70158;
         return --k * k * ((s + 1) * k + s) + 1;
     }
-    public static InOut(k: number): number
+    public static BackInOut(k: number): number
     {
         var s = 1.70158 * 1.525;
         if ((k *= 2) < 1)
@@ -894,17 +933,14 @@ class ATEasingBack
         }
         return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
     }
-}
-/**
- * Tween Easing - Bounce.
- */
-class ATEasingBounce
-{
-    public static In(k: number): number
+    /**
+     * Bounce.
+     */
+    public static BounceIn(k: number): number
     {
-        return 1 - ATEasingBounce.Out(1 - k);
+        return 1 - ATweenEasing.BounceOut(1 - k);
     }
-    public static Out(k: number): number
+    public static BounceOut(k: number): number
     {
         if (k < (1 / 2.75))
         {
@@ -923,26 +959,26 @@ class ATEasingBounce
             return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375;
         }
     }
-    public static InOut(k: number): number
+    public static BounceInOut(k: number): number
     {
         if (k < 0.5)
         {
-            return ATEasingBounce.In(k * 2) * 0.5;
+            return ATweenEasing.BounceIn(k * 2) * 0.5;
         }
-        return ATEasingBounce.Out(k * 2 - 1) * 0.5 + 0.5;
+        return ATweenEasing.BounceOut(k * 2 - 1) * 0.5 + 0.5;
     }
 }
 /**
  * Tween Interpolation.
  */
-class ATInterpolation
+class ATweenInterpolation
 {
     public static Linear(v: Array<any>, k: number): number
     {
         var m = v.length - 1;
         var f = m * k;
         var i = Math.floor(f);
-        var fn = ATInterpolationUtils.Linear;
+        var fn = ATweenInterpolationUtils.Linear;
         if (k < 0)
         {
             return fn(v[0], v[1], f);
@@ -958,7 +994,7 @@ class ATInterpolation
         var b: number = 0;
         var n = v.length - 1;
         var pw = Math.pow;
-        var bn = ATInterpolationUtils.Bernstein;
+        var bn = ATweenInterpolationUtils.Bernstein;
         for (var i = 0; i < n; i++)
         {
             b += pw(1 - k, n - i) * pw(k, i) * v[i] * bn(n, i);
@@ -970,7 +1006,7 @@ class ATInterpolation
         var m = v.length - 1;
         var f = m * k;
         var i = Math.floor(f);
-        var fn = ATInterpolationUtils.CatmullRom;
+        var fn = ATweenInterpolationUtils.CatmullRom;
         if (v[0] == v[m])
         {
             if (k < 0)
@@ -996,7 +1032,7 @@ class ATInterpolation
 /**
  * Tween Interpolation Utils.
  */
-class ATInterpolationUtils
+class ATweenInterpolationUtils
 {
     private static a = [1];
     public static Linear(p0: number, p1: number, t: number): number
@@ -1005,15 +1041,15 @@ class ATInterpolationUtils
     }
     public static Bernstein(n: number, i: number): number
     {
-        var fc = ATInterpolationUtils.Factorial;
+        var fc = ATweenInterpolationUtils.Factorial;
         return fc(n) / fc(i) / fc(n - i);
     }
     public static Factorial(n: number): number
     {
         var s: number = 1;
-        if (ATInterpolationUtils.a[n] != 0)
+        if (ATweenInterpolationUtils.a[n] != 0)
         {
-            return ATInterpolationUtils.a[n];
+            return ATweenInterpolationUtils.a[n];
         }
         var i = n;
         while (i > 1)
@@ -1021,7 +1057,7 @@ class ATInterpolationUtils
             s *= i;
             i--;
         }
-        ATInterpolationUtils.a[n] = s;
+        ATweenInterpolationUtils.a[n] = s;
         return s;
     }
     public static CatmullRom(p0: number, p1: number, p2: number, p3: number, t: number): number

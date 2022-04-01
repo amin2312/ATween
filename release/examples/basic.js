@@ -31,6 +31,11 @@ function a3_b(id) {
 }
 function a4(id) {
     clearTween(id);
+    // css property grammar
+    tws[id] = ATween.newTween({ 'background-color': 255 }, 1000).to({ 'background-color': 0 }).sync(id, ATweenConvertor.rgb).start();
+}
+function a5(id) {
+    clearTween(id);
     tws[id] = ATween.newTween({ left: 0, top: 0 }, 1000).to({ left: 410, top: 30 }).sync(id).start();
 }
 function b1(id) {
@@ -48,7 +53,7 @@ function b3(id) {
 function c1_a(id) {
     var tw = tws[id];
     if (tw) {
-        tw.pause = false;
+        tw.setPause(false);
         return;
     }
     tws[id] = ATween.newTween({ left: 0 }, 5000).to({ left: 410 }).sync(id)
@@ -58,7 +63,7 @@ function c1_a(id) {
 function c1_b(id) {
     var tw = tws[id];
     if (tw) {
-        tw.pause = true;
+        tw.setPause(true);
     }
 }
 function d1_a(id) {

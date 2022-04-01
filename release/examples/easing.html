@@ -1,0 +1,161 @@
+<html>
+
+<head>
+
+</head>
+<style>
+    html {
+        font-size: 12px;
+    }
+
+    html,
+    body {
+        margin: 0px;
+        padding: 0px;
+        color: #000;
+    }
+
+    button {
+        padding: 0px;
+        margin: 5px;
+    }
+
+    table {
+        border-spacing: 0px;
+        border-collapse: collapse;
+    }
+
+    td {
+        border: 1px #000 solid;
+        padding: 5px;
+    }
+
+    #main {
+        width: 1000px;
+        margin: 0px auto 100px auto;
+    }
+
+    .item {
+        width: 300px;
+        height: 250px;
+        border: 1px solid #000;
+        float: left;
+        margin: 5px;
+        display: block;
+    }
+
+    .item>div {
+        font-size: 1.5rem;
+        height: 50px;
+        line-height: 50px;
+        text-align: center;
+        background-color: #CCC;
+    }
+</style>
+
+<body>
+    <div id="main">
+        <div style="line-height: 60px; font-size:2rem; font-weight: bold; text-align: center;">ATween easing types</div>
+        <div id="easing">
+            <div class="item">
+                <div>Linear</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>QuadraticIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>QuadraticOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>QuadraticInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>CubicIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>CubicOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>CubicInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>QuarticIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>QuarticOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>QuarticInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>QuinticIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>QuinticOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>QuinticInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>SinusoidalIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>SinusoidalOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>SinusoidalInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>ExponentialIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>ExponentialOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>ExponentialInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>CircularIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>CircularOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>CircularInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>ElasticIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>ElasticOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>ElasticInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>BackIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>BackOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>BackInOut</div><canvas></canvas>
+            </div>
+            <div class="item" style="clear:both">
+                <div>BounceIn</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>BounceOut</div><canvas></canvas>
+            </div>
+            <div class="item">
+                <div>BounceInOut</div><canvas></canvas>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+    </div>
+</body>
+
+</html>
+<script src="utils/two.min.js"></script>
+<script src="../ATween.js"></script>
+<script src="easing.js"></script>

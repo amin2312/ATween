@@ -43,7 +43,7 @@ function a4(id: string)
     clearTween(id);
 
     // css property grammar
-    tws[id] = ATween.newTween({ 'background-color': 255 }, 1000).to({ 'background-color': 0xFF0000 }).attach(id, ATweenConvertor.rgb).start();
+    tws[id] = ATween.newTween({ 'background-color': 255 }, 1000).to({ 'background-color': 0xFF0000 }).attach(id, ATweenConvertor.css_gradient).start();
 }
 function a5(id: string)
 {

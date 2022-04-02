@@ -120,15 +120,15 @@ var ATween = /** @class */ (function () {
         return num;
     };
     /**
-     * Check the target is tweening.
+     * Check the target or attachment is tweening.
      * @param target As name mean.
      */
-    ATween.isTweening = function (target) {
+    ATween.isTweening = function (targetOrAttachment) {
         var instances = ATween._instances;
         var len = instances.length;
         for (var i = 0; i < len; i++) {
             var ins = instances[i];
-            if (ins._target == target) {
+            if (ins._target == targetOrAttachment || ins._attachment == targetOrAttachment) {
                 return true;
             }
         }
@@ -289,7 +289,7 @@ var ATween = /** @class */ (function () {
                     syncVal = fnC(newVal, startVal, endVal, ePercent, property);
                 }
                 else {
-                    syncVal = Math.floor(newVal) + 'px';
+                    syncVal = Math.floor(newVal);
                 }
                 this._attachment.style.setProperty(property, syncVal);
             }
@@ -598,9 +598,15 @@ var ATweenConvertor = /** @class */ (function () {
     function ATweenConvertor() {
     }
     /**
-     * RGB convert function
+     * css unit function.
      */
-    ATweenConvertor.rgb = function (curValue, startValue, endValue, percent, property) {
+    ATweenConvertor.css_unit = function (curValue, startValue, endValue, percent, property) {
+        return curValue + 'px';
+    };
+    /**
+     * css gradient convert function
+     */
+    ATweenConvertor.css_gradient = function (curValue, startValue, endValue, percent, property) {
         var R0 = (startValue & 0xFF0000) >> 16;
         var G0 = (startValue & 0x00FF00) >> 8;
         var B0 = (startValue & 0x0000FF);

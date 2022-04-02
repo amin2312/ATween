@@ -143,13 +143,13 @@ class ATween {
 	}
 
 	/**
-	 * Check the target is tweening.
+	 * Check the target or attachment is tweening.
 	 * @param target As name mean. 
 	 */
-	public static function isTweening(target:Dynamic):Bool {
+	public static function isTweening(targetOrAttachment:Dynamic):Bool {
 		for (i in 0..._instances.length) {
 			var ins = _instances[i];
-			if (ins._target == target) {
+			if (ins._target == targetOrAttachment || ins._attachment == targetOrAttachment) {
 				return true;
 			}
 		}

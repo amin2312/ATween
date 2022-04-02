@@ -147,17 +147,17 @@ class ATween
         return num;
     }
     /**
-     * Check the target is tweening.
+	 * Check the target or attachment is tweening.
      * @param target As name mean.
      */
-    public static isTweening(target: any): boolean
+    public static isTweening(targetOrAttachment: any): boolean
     {
         var instances = ATween._instances;
         var len = instances.length;
         for (var i = 0; i < len; i++)
         {
             var ins = instances[i];
-            if (ins._target == target)
+            if (ins._target == targetOrAttachment || ins._attachment == targetOrAttachment)
             {
                 return true;
             }
@@ -347,7 +347,7 @@ class ATween
                 }
                 else
                 {
-                    syncVal = Math.floor(newVal) + 'px';
+                    syncVal = Math.floor(newVal);
                 }
                 this._attachment.style.setProperty(property, syncVal);
             }
@@ -684,9 +684,16 @@ class ATween
 class ATweenConvertor
 {
     /**
-     * RGB convert function
+     * css unit function.
      */
-    public static rgb(curValue: number, startValue: number, endValue: number, percent: number, property: string): any
+    public static css_unit(curValue: number, startValue: number, endValue: number, percent: number, property: string): any
+    {
+        return curValue + 'px';
+    }
+    /**
+     * css gradient convert function
+     */
+    public static css_gradient(curValue: number, startValue: number, endValue: number, percent: number, property: string): any
     {
         var R0 = (startValue & 0xFF0000) >> 16;
         var G0 = (startValue & 0x00FF00) >> 8;

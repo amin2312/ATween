@@ -30,6 +30,24 @@
         padding: 5px;
     }
 
+    #nav {
+        height: 30px;
+        line-height: 30px;
+        font-size: 1.5rem;
+        background-color: #EEE;
+    }
+
+    #nav a {
+        color: blue;
+        margin-left:10px;
+        text-decoration: none;
+    }
+
+    #nav a:hover {
+        color: blue;
+        text-decoration: underline;
+    }
+
     #main {
         width: 1000px;
         margin: 0px auto 100px auto;
@@ -55,6 +73,7 @@
 
 <body>
     <div id="main">
+        <div id="nav"><a href="basic.html">Basic examples</a><a href="easing.html">Easing types</a></div>
         <div style="line-height: 60px; font-size:2rem; font-weight: bold; text-align: center;">ATween easing types</div>
         <div id="easing">
             <div class="item">
@@ -152,9 +171,9 @@
             </div>
             <div style="clear: both;"></div>
         </div>
+        
     </div>
 </body>
-
 </html>
 <script src="utils/two.min.js"></script>
 <script src="../ATween.js"></script>

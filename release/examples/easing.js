@@ -10,30 +10,26 @@ function Main() {
         var eName = item.children[0];
         var eCanvas = item.children[1];
         // init canvas
-        eCanvas.setAttribute('width', (item.clientWidth) + '');
+        eCanvas.setAttribute('width', item.clientWidth + '');
         eCanvas.setAttribute('height', (item.clientHeight - eName.clientHeight) + '');
-        var two = new Two({
-            width: eCanvas.width,
-            height: eCanvas.height,
-            domElement: eCanvas,
-            autostart: true,
-        });
+        var two = new Two({ width: eCanvas.width, height: eCanvas.height, domElement: eCanvas, autostart: true });
         // draw edges
-        var shpae = two.makeLine(0, GAP, two.width, GAP);
+        var shpae;
+        shpae = two.makeLine(0, GAP, two.width, GAP);
         shpae.stroke = 'rgb(210, 210, 210)';
         shpae.linewidth = 1;
-        var shpae = two.makeLine(0, two.height - GAP, two.width, two.height - GAP);
+        shpae = two.makeLine(0, two.height - GAP, two.width, two.height - GAP);
         shpae.stroke = 'rgb(210, 210, 210)';
         shpae.linewidth = 1;
         // start work
         var easingName = eName.innerText;
         var func = ATweenEasing[easingName];
-        ATween.newTween({ v: 0 }, 2000).to({ v: 100 }).easing(func).onUpdate(onTweenUpdate).attah(two).onComplete(onTweenComplete).start();
+        ATween.newTween({ v: 0 }, 2000).to({ v: 100 }).easing(func).onUpdate(onEasingUpdate).data(two).onComplete(onEasingComplete).start();
     }
 }
-function onTweenUpdate(p, times) {
+function onEasingUpdate(p, times) {
     var t = this.getTarget();
-    var two = this.getAttachment();
+    var two = this.getData();
     var nextX = Math.floor(p * two.width);
     var nextY = GAP + two.height - GAP * 2 - t.v;
     var lastX = two.lastX || nextX;
@@ -44,8 +40,8 @@ function onTweenUpdate(p, times) {
     two.lastX = nextX;
     two.lastY = nextY;
 }
-function onTweenComplete() {
-    var two = this.getAttachment();
+function onEasingComplete() {
+    var two = this.getData();
     two.pause();
 }
 Main();

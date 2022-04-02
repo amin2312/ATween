@@ -30,8 +30,26 @@
         padding: 5px;
     }
 
+    #nav {
+        height: 30px;
+        line-height: 30px;
+        font-size: 1.5rem;
+        background-color: #EEE;
+    }
+
+    #nav a {
+        color: blue;
+        margin-left:10px;
+        text-decoration: none;
+    }
+
+    #nav a:hover {
+        color: blue;
+        text-decoration: underline;
+    }
+
     #main {
-        width: 900px;
+        width: 1000px;
         margin: 0px auto;
     }
 
@@ -68,7 +86,7 @@
     }
 
     #TestTable td:nth-child(3) {
-        width: 460px;
+        width: 554px;
     }
 
     #TestTable button {
@@ -91,6 +109,7 @@
 
 <body>
     <div id="main">
+        <div id="nav"><a href="basic.html">Basic examples</a><a href="easing.html">Easing types</a></div>
         <div style="line-height: 60px; font-size:2rem; font-weight: bold; text-align: center;">ATween basic examples</div>
         <table id="TestTable">
             <thead>
@@ -137,7 +156,7 @@
                 <tr>
                     <td>a5</td>
                     <td>to (2D)</td>
-                    <td style="height: 100px; vertical-align: top;">
+                    <td style="height: 101px; vertical-align: top;">
                         <div id="a5" class="box50"></div>
                     </td>
                     <td><button onclick="a5('a5')">start</button></td>
@@ -226,5 +245,5 @@
 </body>
 
 </html>
-<script src="../ATween.js"></script>
+<script src="../ATweenHx.js"></script>
 <script src="basic.js"></script>

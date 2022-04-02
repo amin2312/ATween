@@ -5,7 +5,6 @@
  * 3. MIT License
  *
  * ATween - a a easy, fast and tiny tween libary.
- * It use chained call.
  */
 var ATween = /** @class */ (function () {
     /**
@@ -21,9 +20,9 @@ var ATween = /** @class */ (function () {
          **/
         this.elapsedPercent = 0;
         this._initedTarget = false;
-        this._syncObj = null;
-        this._syncCnv = null;
         this._attachment = null;
+        this._convertor = null;
+        this._data = null;
         this._repeatNextStartMs = 0;
         this._repeatRefs = 0; // references, reference count
         this._repeatSteps = 0;
@@ -37,8 +36,7 @@ var ATween = /** @class */ (function () {
         this._isCompleted = false;
         this._pause = false;
         this._retain = false;
-        this._easing = ATweenEasing.Linear;
-        this._interpolation = ATweenInterpolation.Linear;
+        this._easing = null;
         /**
          * The callback functions.
          **/
@@ -67,7 +65,8 @@ var ATween = /** @class */ (function () {
         }
     };
     /**
-     * Updates all tweens by the specified time(unit: millisecond).
+     * Updates all tweens by the specified time.
+     * @param ms millisecond unit
      */
     ATween.updateAll = function (ms) {
         if (ATween._instances.length == 0) {
@@ -101,19 +100,19 @@ var ATween = /** @class */ (function () {
         }
     };
     /**
-     * Kill all tweens of indicated target or sync object.
-     * @param target As name mean.
+     * Kill all tweens of indicated the target or attachment.
+     * @param targetOrAttachment the target or attachment.
      * @param withComplete Indicates whether to call complete function.
      * @returns Number of killed instances
      */
-    ATween.killTweens = function (targetOrSyncObject, withComplete) {
+    ATween.killTweens = function (targetOrAttachment, withComplete) {
         if (withComplete === void 0) { withComplete = false; }
         var clone = ATween._instances.concat([]);
         var len = clone.length;
         var num = 0;
         for (var i = 0; i < len; i++) {
             var ins = clone[i];
-            if (ins._target == targetOrSyncObject || ins._syncObj == targetOrSyncObject) {
+            if (ins._target == targetOrAttachment || ins._attachment == targetOrAttachment) {
                 ins.cancel(withComplete);
                 num++;
             }
@@ -123,7 +122,6 @@ var ATween = /** @class */ (function () {
     /**
      * Check the target is tweening.
      * @param target As name mean.
-     * @returns The result.
      */
     ATween.isTweening = function (target) {
         var instances = ATween._instances;
@@ -151,7 +149,10 @@ var ATween = /** @class */ (function () {
                     window.requestAnimationFrame(onFrame);
                 };
                 lastTime = window.performance.now();
-                window.requestAnimationFrame(onFrame);
+                onFrame(lastTime);
+            }
+            else {
+                console.log('You need to manually call "ATween.updateAll" function update all tweens');
             }
         }
     };
@@ -176,9 +177,9 @@ var ATween = /** @class */ (function () {
      * Create a once timer.
      * @remarks
      * Don't reuse the tween instance, it's one-time
-     * @param intervalMs As name mean(unit:ms)
+     * @param intervalMs interval millisecond
      * @param onCompleteCallback The callback function when complete.
-     * @param onCompleteParams The callback parameters(array) when complete.
+     * @param onCompleteParams The callback parameters when complete.
      * @returns Tween instance
      */
     ATween.newOnce = function (intervalMs, onCompleteCallback, onCompleteParams) {
@@ -197,7 +198,7 @@ var ATween = /** @class */ (function () {
      * @param times Repeat Times(-1 is infinity)
      * @param onRepeatCallback  if return false, then will cancel this timer.
      * @param onCompleteCallback The callback function when complete.
-     * @param onCompleteParams The callback parameters(array) when complete.
+     * @param onCompleteParams The callback parameters when complete.
      * @returns Tween instance
      **/
     ATween.newTimer = function (intervalMs, times, onRepeatCallback, onCompleteCallback, onCompleteParams) {
@@ -234,17 +235,12 @@ var ATween = /** @class */ (function () {
         for (var property in this._dstVals) {
             var curVal = this._target[property];
             var dstVal = this._dstVals[property];
-            if (dstVal instanceof Array) {
-                if (dstVal.length == 0) {
-                    continue;
-                }
-                this._dstVals[property] = [curVal].concat(dstVal);
+            if (typeof (dstVal) != 'number') {
+                throw "Unknown dest value:" + dstVal;
             }
             // !! Convert Empty value(null, false, '') to 0
-            if (!(curVal instanceof Array)) {
-                curVal *= 1.0;
-            }
-            // create current values set
+            curVal *= 1.0;
+            // create source values
             if (this._srcVals == null) {
                 this._srcVals = {};
             }
@@ -265,39 +261,37 @@ var ATween = /** @class */ (function () {
         if (this._target == null) {
             return;
         }
-        var fn = this._easing;
-        var ePercent = fn(percent);
+        var ePercent = percent;
+        var fnE = this._easing;
+        if (fnE != null) {
+            ePercent = fnE(percent);
+        }
         for (var property in this._srcVals) {
             var curVal = this._srcVals[property];
             if (curVal == null) {
                 continue;
             }
-            var valueA = curVal;
-            var valueB = this._dstVals[property];
-            if (valueB instanceof Array) {
-                this._target[property] = this._interpolation(valueB, ePercent);
-            }
-            else if ((typeof valueB) == 'number') {
-                var startVal = valueA;
-                var endVal = valueB;
-                var newVal;
-                if (percent >= 1) {
-                    newVal = endVal;
-                }
-                else {
-                    newVal = startVal + (endVal - startVal) * ePercent;
-                }
-                this._target[property] = newVal;
-                if (this._syncObj != null) {
-                    var cnvVal = newVal;
-                    if (this._syncCnv != null) {
-                        cnvVal = this._syncCnv(newVal);
-                    }
-                    this._syncObj.style.setProperty(property, cnvVal);
-                }
+            var startVal = curVal;
+            var endVal = this._dstVals[property];
+            var newVal;
+            if (percent >= 1) {
+                newVal = endVal;
             }
             else {
-                throw "Unknown destination value" + valueB;
+                newVal = startVal + (endVal - startVal) * ePercent;
+            }
+            this._target[property] = newVal;
+            // sync value to bind object
+            if (this._attachment != null) {
+                var syncVal;
+                var fnC = this._convertor;
+                if (fnC != null) {
+                    syncVal = fnC(newVal, startVal, endVal, ePercent, property);
+                }
+                else {
+                    syncVal = Math.floor(newVal) + 'px';
+                }
+                this._attachment.style.setProperty(property, syncVal);
             }
         }
         // [Callback Handler]
@@ -308,7 +302,7 @@ var ATween = /** @class */ (function () {
         }
     };
     /**
-     * Update tween by ms.
+     * Update tween by the specified time.
      */
     ATween.prototype.update = function (ms) {
         this.elapsedMs += ms;
@@ -323,7 +317,7 @@ var ATween = /** @class */ (function () {
         if (this.elapsedMs < this._startMs) {
             return true;
         }
-        // init target properties
+        // init target
         if (this._target != null && this._initedTarget == false) {
             this.initTarget();
         }
@@ -365,7 +359,8 @@ var ATween = /** @class */ (function () {
                 // [Callback Handler]
                 if (this._onRepeatCallback != null) {
                     var cbR = this._onRepeatCallback;
-                    if (cbR.call(this, this._repeatSteps) === false) {
+                    var rzl = cbR.call(this, this._repeatSteps);
+                    if (rzl === false) {
                         this._repeatRefs = 0;
                     }
                 }
@@ -399,7 +394,7 @@ var ATween = /** @class */ (function () {
         }
         ATween._del(this);
         this._isCompleted = true;
-        // [取消回调]
+        // [Callback Handler]
         if (this._onCancelCallback != null) {
             var cb = this._onCancelCallback;
             cb.call(this);
@@ -415,15 +410,13 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Sync the new value to HTMLElement style property.
-     * @remarks
-     * This method only adapts to the browser environment.
+     * Attach to HTMLElement element(The new tween value will auto sync to it).
      * @param obj HTMLElement or element id
-     * @param convert the tween value convertor of ojb(like number to RGB, to px unit)
+     * @param convert the tween value convertor for obj(like number to RGB)
      * @returns Tween instance
      */
-    ATween.prototype.sync = function (obj, convert) {
-        if (convert === void 0) { convert = ATweenConvertor.def; }
+    ATween.prototype.attach = function (obj, convert) {
+        if (convert === void 0) { convert = null; }
         var t;
         if (obj instanceof HTMLElement) {
             t = obj;
@@ -431,22 +424,22 @@ var ATween = /** @class */ (function () {
         else {
             t = document.getElementById(obj);
         }
-        this._syncObj = t;
-        this._syncCnv = convert;
+        this._attachment = t;
+        this._convertor = convert;
         return this;
     };
     /**
-     * Attah a object.
+     * Store arbitrary data associated with this tween.
      */
-    ATween.prototype.attah = function (obj) {
-        this._attachment = obj;
+    ATween.prototype.data = function (v) {
+        this._data = v;
         return this;
     };
     /**
      * Set repeat times.
      * @param times As name mean
      * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
-     * @param delayMs delay trigger(unit ms).
+     * @param delayMs delay trigger time
      * @returns Tween instance
      */
     ATween.prototype.repeat = function (times, yoyo, delayMs) {
@@ -465,7 +458,9 @@ var ATween = /** @class */ (function () {
      * @returns Tween instance
      */
     ATween.prototype.callRepeat = function () {
-        if (this._onRepeatCallback(0) == false) {
+        var cb = this._onRepeatCallback;
+        var rzl = cb.call(this, 0);
+        if (rzl == false) {
             this.release().cancel();
         }
         return this;
@@ -495,14 +490,6 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Set interpolation function.
-     * @returns Tween instance
-     */
-    ATween.prototype.interpolation = function (callback) {
-        this._interpolation = callback;
-        return this;
-    };
-    /**
      * Determine whether the tween is keeping.
      * @returns Tween instance
      */
@@ -510,11 +497,14 @@ var ATween = /** @class */ (function () {
         return this._retain;
     };
     /**
-     * Pause.
+     * Set pause state.
      */
     ATween.prototype.setPause = function (v) {
         this._pause = v;
     };
+    /**
+     * Get pause state.
+     */
     ATween.prototype.getPause = function () {
         return this._pause;
     };
@@ -531,16 +521,16 @@ var ATween = /** @class */ (function () {
         return this._target;
     };
     /**
-     * Get sync object.
-     */
-    ATween.prototype.getSyncObject = function () {
-        return this._syncObj;
-    };
-    /**
      * Get attachment.
      */
     ATween.prototype.getAttachment = function () {
         return this._attachment;
+    };
+    /**
+     * Get data.
+     */
+    ATween.prototype.getData = function () {
+        return this._data;
     };
     /**
      * Set the callback function when the tween start.
@@ -588,7 +578,7 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Determine whether stop all tweens.
+     * Determines whether to stop all tweens.
      */
     ATween.stop = false;
     /**
@@ -608,16 +598,20 @@ var ATweenConvertor = /** @class */ (function () {
     function ATweenConvertor() {
     }
     /**
-     * Default convert function
-     */
-    ATweenConvertor.def = function (v) {
-        return v + 'px';
-    };
-    /**
      * RGB convert function
      */
-    ATweenConvertor.rgb = function (v) {
-        var s = Math.round(v).toString(16);
+    ATweenConvertor.rgb = function (curValue, startValue, endValue, percent, property) {
+        var R0 = (startValue & 0xFF0000) >> 16;
+        var G0 = (startValue & 0x00FF00) >> 8;
+        var B0 = (startValue & 0x0000FF);
+        var R1 = (endValue & 0xFF0000) >> 16;
+        var G1 = (endValue & 0x00FF00) >> 8;
+        var B1 = (endValue & 0x0000FF);
+        var R = Math.floor(R1 * percent + (1 - percent) * R0);
+        var G = Math.floor(G1 * percent + (1 - percent) * G0);
+        var B = Math.floor(B1 * percent + (1 - percent) * B0);
+        var color = (R << 16) | (G << 8) | B;
+        var s = color.toString(16);
         for (var i = s.length; i < 6; i++) {
             s = '0' + s;
         }
@@ -824,92 +818,4 @@ var ATweenEasing = /** @class */ (function () {
         return ATweenEasing.BounceOut(k * 2 - 1) * 0.5 + 0.5;
     };
     return ATweenEasing;
-}());
-/**
- * Tween Interpolation.
- */
-var ATweenInterpolation = /** @class */ (function () {
-    function ATweenInterpolation() {
-    }
-    ATweenInterpolation.Linear = function (v, k) {
-        var m = v.length - 1;
-        var f = m * k;
-        var i = Math.floor(f);
-        var fn = ATweenInterpolationUtils.Linear;
-        if (k < 0) {
-            return fn(v[0], v[1], f);
-        }
-        if (k > 1) {
-            return fn(v[m], v[m - 1], m - f);
-        }
-        return fn(v[i], v[i + 1 > m ? m : i + 1], f - i);
-    };
-    ATweenInterpolation.Bezier = function (v, k) {
-        var b = 0;
-        var n = v.length - 1;
-        var pw = Math.pow;
-        var bn = ATweenInterpolationUtils.Bernstein;
-        for (var i = 0; i < n; i++) {
-            b += pw(1 - k, n - i) * pw(k, i) * v[i] * bn(n, i);
-        }
-        return b;
-    };
-    ATweenInterpolation.CatmullRom = function (v, k) {
-        var m = v.length - 1;
-        var f = m * k;
-        var i = Math.floor(f);
-        var fn = ATweenInterpolationUtils.CatmullRom;
-        if (v[0] == v[m]) {
-            if (k < 0) {
-                i = Math.floor(f = m * (1 + k));
-            }
-            return fn(v[(i - 1 + m) % m], v[i], v[(i + 1) % m], v[(i + 2) % m], f - i);
-        }
-        else {
-            if (k < 0) {
-                return v[0] - (fn(v[0], v[0], v[1], v[1], -f) - v[0]);
-            }
-            if (k > 1) {
-                return v[m] - (fn(v[m], v[m], v[m - 1], v[m - 1], f - m) - v[m]);
-            }
-            return fn(v[i != 0 ? i - 1 : 0], v[i], v[m < i + 1 ? m : i + 1], v[m < i + 2 ? m : i + 2], f - i);
-        }
-    };
-    return ATweenInterpolation;
-}());
-/**
- * Tween Interpolation Utils.
- */
-var ATweenInterpolationUtils = /** @class */ (function () {
-    function ATweenInterpolationUtils() {
-    }
-    ATweenInterpolationUtils.Linear = function (p0, p1, t) {
-        return (p1 - p0) * t + p0;
-    };
-    ATweenInterpolationUtils.Bernstein = function (n, i) {
-        var fc = ATweenInterpolationUtils.Factorial;
-        return fc(n) / fc(i) / fc(n - i);
-    };
-    ATweenInterpolationUtils.Factorial = function (n) {
-        var s = 1;
-        if (ATweenInterpolationUtils.a[n] != 0) {
-            return ATweenInterpolationUtils.a[n];
-        }
-        var i = n;
-        while (i > 1) {
-            s *= i;
-            i--;
-        }
-        ATweenInterpolationUtils.a[n] = s;
-        return s;
-    };
-    ATweenInterpolationUtils.CatmullRom = function (p0, p1, p2, p3, t) {
-        var v0 = (p2 - p0) * 0.5;
-        var v1 = (p3 - p1) * 0.5;
-        var t2 = t * t;
-        var t3 = t * t2;
-        return (2 * p1 - 2 * p2 + v0 + v1) * t3 + (-3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 + v0 * t + p1;
-    };
-    ATweenInterpolationUtils.a = [1];
-    return ATweenInterpolationUtils;
 }());

@@ -1,0 +1,3 @@
+-cp src
+ATween
+-js release/ATweenHx.js

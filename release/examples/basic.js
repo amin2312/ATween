@@ -5,7 +5,7 @@
 function a1(id) {
     clearTween(id);
     var target = { x: 0 };
-    tws[id] = ATween.newTween(target, 1000).to({ x: 410 })
+    tws[id] = ATween.newTween(target, 1000).to({ x: 504 })
         .onUpdate(function () {
         document.getElementById(id).style.left = target.x + 'px';
     })
@@ -13,11 +13,11 @@ function a1(id) {
 }
 function a2(id) {
     clearTween(id);
-    tws[id] = ATween.newTween({ left: 0 }, 1000).to({ left: 410 }).sync(id).start();
+    tws[id] = ATween.newTween({ left: 0 }, 1000).to({ left: 504 }).attach(id).start();
 }
 function a3_a(id) {
     clearTween(id);
-    tws[id] = ATween.newTween({ left: 0 }, 3000).to({ left: 410 }).sync(id)
+    tws[id] = ATween.newTween({ left: 0 }, 3000).to({ left: 504 }).attach(id)
         .onCancel(function () {
         console.log('cancel with complete');
     })
@@ -32,23 +32,23 @@ function a3_b(id) {
 function a4(id) {
     clearTween(id);
     // css property grammar
-    tws[id] = ATween.newTween({ 'background-color': 255 }, 1000).to({ 'background-color': 0 }).sync(id, ATweenConvertor.rgb).start();
+    tws[id] = ATween.newTween({ 'background-color': 255 }, 1000).to({ 'background-color': 0xFF0000 }).attach(id, ATweenConvertor.rgb).start();
 }
 function a5(id) {
     clearTween(id);
-    tws[id] = ATween.newTween({ left: 0, top: 0 }, 1000).to({ left: 410, top: 30 }).sync(id).start();
+    tws[id] = ATween.newTween({ left: 0, top: 0 }, 1000).to({ left: 504, top: 40 }).attach(id).start();
 }
 function b1(id) {
     clearTween(id);
-    tws[id] = ATween.newTween({ left: 0 }, 1000).to({ left: 410 }).repeat(2, false).sync(id).start();
+    tws[id] = ATween.newTween({ left: 0 }, 1000).to({ left: 504 }).repeat(2, false).attach(id).start();
 }
 function b2(id) {
     clearTween(id);
-    tws[id] = ATween.newTween({ left: 0 }, 1000).to({ left: 410 }).repeat(2, false, 1000).sync(id).start();
+    tws[id] = ATween.newTween({ left: 0 }, 1000).to({ left: 504 }).repeat(2, false, 1000).attach(id).start();
 }
 function b3(id) {
     clearTween(id);
-    tws[id] = ATween.newTween({ left: 0 }, 1000).to({ left: 410 }).repeat(2, true).sync(id).start();
+    tws[id] = ATween.newTween({ left: 0 }, 1000).to({ left: 504 }).repeat(2, true).attach(id).start();
 }
 function c1_a(id) {
     var tw = tws[id];
@@ -56,7 +56,7 @@ function c1_a(id) {
         tw.setPause(false);
         return;
     }
-    tws[id] = ATween.newTween({ left: 0 }, 5000).to({ left: 410 }).sync(id)
+    tws[id] = ATween.newTween({ left: 0 }, 5000).to({ left: 504 }).attach(id)
         .onComplete(function () { clearTween(id); })
         .start();
 }
@@ -73,9 +73,9 @@ function d1_a(id) {
     ATween.killTweens(o1);
     ATween.killTweens(o2);
     ATween.killTweens(o3);
-    ATween.newTween({ left: 0 }, 2000).to({ left: 410 }).repeat(2, true).sync(o1).start();
-    ATween.newTween({ left: 0 }, 2000).to({ left: 410 }).repeat(2, true).sync(o2).start();
-    ATween.newTween({ left: 0 }, 2000).to({ left: 410 }).repeat(2, true).sync(o3).retain().start();
+    ATween.newTween({ left: 0 }, 2000).to({ left: 504 }).repeat(2, true).attach(o1).start();
+    ATween.newTween({ left: 0 }, 2000).to({ left: 504 }).repeat(2, true).attach(o2).start();
+    ATween.newTween({ left: 0 }, 2000).to({ left: 504 }).repeat(2, true).attach(o3).retain().start();
 }
 function d1_b(id) {
     var o1 = document.getElementById(id + 'a');
@@ -94,7 +94,7 @@ function e1(id) {
     o2.className = '';
     o3.className = '';
     var target = { x: 0 };
-    tws[id] = ATween.newTween(target, 1000, 100).to({ x: 410 })
+    tws[id] = ATween.newTween(target, 1000, 100).to({ x: 504 })
         .onStart(function () {
         o1.className = 'shine1';
     })
@@ -112,7 +112,7 @@ function e1(id) {
 function f1(id) {
     clearTween(id);
     var obj = document.getElementById(id);
-    tws[id] = ATween.newTimer(1000, 10, function (steps) {
+    tws[id] = ATween.newTimer(1000, 3, function (steps) {
         // Note: When call the 'callRepeat' function, the first value of 'steps' is 0
         if (steps == 0) {
             obj.innerText = 'The timer fires after 1000ms';

@@ -1,4 +1,5 @@
-declare class Two {
+declare class Two
+{
     type: Two.Types;
 
     width: number;
@@ -32,15 +33,16 @@ declare class Two {
     clear();
 
 }
-
-declare module Two {
-    enum Types {
+declare module Two
+{
+    enum Types
+    {
         webgl,
         svg,
         canvas,
     }
-
-    enum Events {
+    enum Events
+    {
         play,
         pause,
         update,
@@ -50,14 +52,14 @@ declare module Two {
         remove,
         insert,
     }
-
-    class Vector {
+    class Vector
+    {
         x: number;
         y: number;
         set(x: number, y: number);
     }
-
-    class LogicalShape extends Backbone.Events {
+    class LogicalShape
+    {
         translation: Two.Vector;
         rotation: number; // radian
         scale: number;
@@ -67,8 +69,8 @@ declare module Two {
         parent: Two.Group;
         vertices: Collection;
     }
-
-    export class Shape extends LogicalShape {
+    export class Shape extends LogicalShape
+    {
         parent: Two.Group;
 
         stroke: string; // color
@@ -86,19 +88,18 @@ declare module Two {
         noFill();
         subdivide();
     }
-
-    class Polygon extends Shape {
+    class Polygon extends Shape
+    {
         vertices: Collection;
     }
-
-    class Group extends LogicalShape {
+    class Group extends LogicalShape
+    {
         children: Array<any>
     }
-
     interface Collection extends Array<any> { }
 }
-
-interface TwoConstructionParams {
+interface TwoConstructionParams
+{
     type?: Two.Types;
     width?: number;
     height?: number;

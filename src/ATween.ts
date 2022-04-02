@@ -4,12 +4,11 @@
  * 3. MIT License
  *
  * ATween - a a easy, fast and tiny tween libary.
- * It use chained call.
  */
 class ATween
 {
     /**
-     * Determine whether stop all tweens.
+     * Determines whether to stop all tweens.
      */
     public static stop: boolean = false;
     /**
@@ -33,14 +32,13 @@ class ATween
      */
     private _target: any;
     private _initedTarget: boolean = false;
-    private _srcVals: { [key: string]: (number | number[]) };
-    private _dstVals: { [key: string]: (number | number[]) };
-    private _revVals: any;
+    private _srcVals: { [key: string]: number };
+    private _dstVals: { [key: string]: number };
+    private _revVals: { [key: string]: number };
 
-    private _syncObj: HTMLElement = null;
-    private _syncCnv: (v: number) => any = null;
-
-    private _attachment: any = null;
+    private _attachment: HTMLElement = null;
+    private _convertor: (curValue: number, startValue: number, endValue: number, percent: number, property: string) => any = null;
+    private _data: any = null;
 
     private _repeatNextStartMs: number = 0;
     private _repeatRefs: number = 0; // references, reference count
@@ -56,8 +54,7 @@ class ATween
     private _isCompleted = false;
     private _pause: boolean = false;
     private _retain: boolean = false;
-    private _easing: (k: number) => number = ATweenEasing.Linear;
-    private _interpolation: (v: Array<any>, k: number) => number = ATweenInterpolation.Linear;
+    private _easing: (k: number) => number = null;
     /**
      * The callback functions.
      **/
@@ -87,7 +84,8 @@ class ATween
         }
     }
     /**
-     * Updates all tweens by the specified time(unit: millisecond).
+     * Updates all tweens by the specified time.
+     * @param ms millisecond unit
      */
     public static updateAll(ms: number): void
     {
@@ -127,12 +125,12 @@ class ATween
         }
     }
     /**
-     * Kill all tweens of indicated target or sync object.
-     * @param target As name mean.
+     * Kill all tweens of indicated the target or attachment.
+     * @param targetOrAttachment the target or attachment.
      * @param withComplete Indicates whether to call complete function.
      * @returns Number of killed instances
      */
-    public static killTweens(targetOrSyncObject: any, withComplete: boolean = false): number
+    public static killTweens(targetOrAttachment: any, withComplete: boolean = false): number
     {
         var clone = ATween._instances.concat([]);
         var len = clone.length;
@@ -140,7 +138,7 @@ class ATween
         for (var i = 0; i < len; i++)
         {
             var ins = clone[i];
-            if (ins._target == targetOrSyncObject || ins._syncObj == targetOrSyncObject)
+            if (ins._target == targetOrAttachment || ins._attachment == targetOrAttachment)
             {
                 ins.cancel(withComplete);
                 num++;
@@ -150,8 +148,7 @@ class ATween
     }
     /**
      * Check the target is tweening.
-     * @param target As name mean. 
-     * @returns The result.
+     * @param target As name mean.
      */
     public static isTweening(target: any): boolean
     {
@@ -184,7 +181,7 @@ class ATween
             ATween._isInstalled = true;
             if (window != null && window.requestAnimationFrame != null)
             {
-                var lastTime = 0;
+                var lastTime: number = 0;
                 var onFrame = function (now: DOMHighResTimeStamp): void
                 {
                     var ms = now - lastTime;
@@ -193,7 +190,11 @@ class ATween
                     window.requestAnimationFrame(onFrame);
                 }
                 lastTime = window.performance.now();
-                window.requestAnimationFrame(onFrame);
+                onFrame(lastTime);
+            }
+            else
+            {
+                console.log('You need to manually call "ATween.updateAll" function update all tweens');
             }
         }
     }
@@ -218,9 +219,9 @@ class ATween
      * Create a once timer.
      * @remarks
      * Don't reuse the tween instance, it's one-time
-     * @param intervalMs As name mean(unit:ms)
+     * @param intervalMs interval millisecond
      * @param onCompleteCallback The callback function when complete.
-     * @param onCompleteParams The callback parameters(array) when complete.
+     * @param onCompleteParams The callback parameters when complete.
      * @returns Tween instance
      */
     public static newOnce(intervalMs: number, onCompleteCallback: any, onCompleteParams: Array<any> = null): ATween
@@ -239,7 +240,7 @@ class ATween
      * @param times Repeat Times(-1 is infinity)
      * @param onRepeatCallback  if return false, then will cancel this timer.
      * @param onCompleteCallback The callback function when complete.
-     * @param onCompleteParams The callback parameters(array) when complete.
+     * @param onCompleteParams The callback parameters when complete.
      * @returns Tween instance
      **/
     public static newTimer(intervalMs: number, times: number, onRepeatCallback: (steps: number) => boolean, onCompleteCallback: any = null, onCompleteParams: Array<any> = null): ATween
@@ -280,20 +281,13 @@ class ATween
         {
             var curVal: any = this._target[property];
             var dstVal: any = this._dstVals[property];
-            if (dstVal instanceof Array)
+            if (typeof (dstVal) != 'number')
             {
-                if (dstVal.length == 0)
-                {
-                    continue;
-                }
-                this._dstVals[property] = [curVal].concat(dstVal);
+                throw "Unknown dest value:" + dstVal;
             }
             // !! Convert Empty value(null, false, '') to 0
-            if (!(curVal instanceof Array))
-            {
-                curVal *= 1.0;
-            }
-            // create current values set
+            curVal *= 1.0;
+            // create source values
             if (this._srcVals == null)
             {
                 this._srcVals = {};
@@ -317,8 +311,12 @@ class ATween
         {
             return;
         }
-        var fn = this._easing;
-        var ePercent = fn(percent);
+        var ePercent = percent;
+        var fnE = this._easing;
+        if (fnE != null)
+        {
+            ePercent = fnE(percent);
+        }
         for (var property in this._srcVals)
         {
             var curVal = this._srcVals[property];
@@ -326,39 +324,32 @@ class ATween
             {
                 continue;
             }
-            var valueA = curVal;
-            var valueB = this._dstVals[property];
-            if (valueB instanceof Array)
+            var startVal = curVal;
+            var endVal = this._dstVals[property];
+            var newVal: number;
+            if (percent >= 1)
             {
-                this._target[property] = this._interpolation(valueB, ePercent);
-            }
-            else if ((typeof valueB) == 'number')
-            {
-                var startVal: number = valueA as number;
-                var endVal: number = valueB;
-                var newVal: number;
-                if (percent >= 1)
-                {
-                    newVal = endVal;
-                }
-                else
-                {
-                    newVal = startVal + (endVal - startVal) * ePercent;
-                }
-                this._target[property] = newVal;
-                if (this._syncObj != null)
-                {
-                    var cnvVal: any = newVal;
-                    if (this._syncCnv != null)
-                    {
-                        cnvVal = this._syncCnv(newVal);
-                    }
-                    this._syncObj.style.setProperty(property, cnvVal);
-                }
+                newVal = endVal;
             }
             else
             {
-                throw "Unknown destination value" + valueB;
+                newVal = startVal + (endVal - startVal) * ePercent;
+            }
+            this._target[property] = newVal;
+            // sync value to bind object
+            if (this._attachment != null)
+            {
+                var syncVal: any;
+                var fnC = this._convertor;
+                if (fnC != null)
+                {
+                    syncVal = fnC(newVal, startVal, endVal, ePercent, property);
+                }
+                else
+                {
+                    syncVal = Math.floor(newVal) + 'px';
+                }
+                this._attachment.style.setProperty(property, syncVal);
             }
         }
         // [Callback Handler]
@@ -370,7 +361,7 @@ class ATween
         }
     }
     /**
-     * Update tween by ms.
+     * Update tween by the specified time.
      */
     public update(ms: number): boolean
     {
@@ -390,7 +381,7 @@ class ATween
         {
             return true;
         }
-        // init target properties
+        // init target
         if (this._target != null && this._initedTarget == false)
         {
             this.initTarget();
@@ -442,7 +433,8 @@ class ATween
                 if (this._onRepeatCallback != null)
                 {
                     var cbR = this._onRepeatCallback;
-                    if (cbR.call(this, this._repeatSteps) === false)
+                    var rzl = cbR.call(this, this._repeatSteps);
+                    if (rzl === false)
                     {
                         this._repeatRefs = 0;
                     }
@@ -481,7 +473,7 @@ class ATween
         }
         ATween._del(this);
         this._isCompleted = true;
-        // [取消回调]
+        // [Callback Handler]
         if (this._onCancelCallback != null)
         {
             var cb = this._onCancelCallback;
@@ -499,14 +491,12 @@ class ATween
         return this;
     }
     /**
-     * Sync the new value to HTMLElement style property.
-     * @remarks
-     * This method only adapts to the browser environment.
+     * Attach to HTMLElement element(The new tween value will auto sync to it).
      * @param obj HTMLElement or element id
-     * @param convert the tween value convertor of ojb(like number to RGB, to px unit)
+     * @param convert the tween value convertor for obj(like number to RGB)
      * @returns Tween instance
      */
-    public sync(obj: HTMLElement | string, convert: (v: number) => any = ATweenConvertor.def): ATween
+    public attach(obj: HTMLElement | string, convert: (curValue: number, startValue: number, endValue: number, percent: number, property: string) => any = null): ATween
     {
         var t: HTMLElement;
         if (obj instanceof HTMLElement)
@@ -517,23 +507,23 @@ class ATween
         {
             t = document.getElementById(obj);
         }
-        this._syncObj = t;
-        this._syncCnv = convert;
+        this._attachment = t;
+        this._convertor = convert;
         return this;
     }
     /**
-     * Attah a object.
+     * Store arbitrary data associated with this tween.
      */
-    public attah(obj: any): ATween
+    public data(v: any): ATween
     {
-        this._attachment = obj;
+        this._data = v;
         return this;
     }
     /**
      * Set repeat times.
      * @param times As name mean
      * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
-     * @param delayMs delay trigger(unit ms).
+     * @param delayMs delay trigger time
      * @returns Tween instance
      */
     public repeat(times: number, yoyo: boolean = false, delayMs: number = 0): ATween
@@ -552,7 +542,9 @@ class ATween
      */
     public callRepeat(): ATween
     {
-        if (this._onRepeatCallback(0) == false)
+        var cb = this._onRepeatCallback;
+        var rzl = cb.call(this, 0);
+        if (rzl == false)
         {
             this.release().cancel();
         }
@@ -586,15 +578,6 @@ class ATween
         return this;
     }
     /**
-     * Set interpolation function.
-     * @returns Tween instance
-     */
-    public interpolation(callback: (v: Array<any>, k: number) => number): ATween
-    {
-        this._interpolation = callback;
-        return this;
-    }
-    /**
      * Determine whether the tween is keeping.
      * @returns Tween instance
      */
@@ -603,12 +586,15 @@ class ATween
         return this._retain;
     }
     /**
-     * Pause.
+     * Set pause state.
      */
     public setPause(v: boolean)
     {
         this._pause = v;
     }
+    /**
+     * Get pause state.
+     */
     public getPause(): boolean
     {
         return this._pause;
@@ -628,18 +614,18 @@ class ATween
         return this._target;
     }
     /**
-     * Get sync object.
-     */
-    public getSyncObject(): any
-    {
-        return this._syncObj;
-    }
-    /**
      * Get attachment.
      */
     public getAttachment(): any
     {
         return this._attachment;
+    }
+    /**
+     * Get data.
+     */
+    public getData(): any
+    {
+        return this._data;
     }
     /**
      * Set the callback function when the tween start.
@@ -698,18 +684,22 @@ class ATween
 class ATweenConvertor
 {
     /**
-     * Default convert function
-     */
-    public static def(v: number): any
-    {
-        return v + 'px';
-    }
-    /**
      * RGB convert function
      */
-    public static rgb(v: number): any
+    public static rgb(curValue: number, startValue: number, endValue: number, percent: number, property: string): any
     {
-        var s = Math.round(v).toString(16);
+        var R0 = (startValue & 0xFF0000) >> 16;
+        var G0 = (startValue & 0x00FF00) >> 8;
+        var B0 = (startValue & 0x0000FF);
+        var R1 = (endValue & 0xFF0000) >> 16;
+        var G1 = (endValue & 0x00FF00) >> 8;
+        var B1 = (endValue & 0x0000FF);
+        var R = Math.floor(R1 * percent + (1 - percent) * R0);
+        var G = Math.floor(G1 * percent + (1 - percent) * G0);
+        var B = Math.floor(B1 * percent + (1 - percent) * B0);
+
+        var color = (R << 16) | (G << 8) | B;
+        var s = color.toString(16);
         for (var i = s.length; i < 6; i++)
         {
             s = '0' + s;
@@ -717,7 +707,6 @@ class ATweenConvertor
         return "#" + s;
     }
 }
-
 /**
  * Tween Easing.
  */
@@ -966,106 +955,5 @@ class ATweenEasing
             return ATweenEasing.BounceIn(k * 2) * 0.5;
         }
         return ATweenEasing.BounceOut(k * 2 - 1) * 0.5 + 0.5;
-    }
-}
-/**
- * Tween Interpolation.
- */
-class ATweenInterpolation
-{
-    public static Linear(v: Array<any>, k: number): number
-    {
-        var m = v.length - 1;
-        var f = m * k;
-        var i = Math.floor(f);
-        var fn = ATweenInterpolationUtils.Linear;
-        if (k < 0)
-        {
-            return fn(v[0], v[1], f);
-        }
-        if (k > 1)
-        {
-            return fn(v[m], v[m - 1], m - f);
-        }
-        return fn(v[i], v[i + 1 > m ? m : i + 1], f - i);
-    }
-    public static Bezier(v: Array<any>, k: number): number
-    {
-        var b: number = 0;
-        var n = v.length - 1;
-        var pw = Math.pow;
-        var bn = ATweenInterpolationUtils.Bernstein;
-        for (var i = 0; i < n; i++)
-        {
-            b += pw(1 - k, n - i) * pw(k, i) * v[i] * bn(n, i);
-        }
-        return b;
-    }
-    public static CatmullRom(v: Array<any>, k: number): number
-    {
-        var m = v.length - 1;
-        var f = m * k;
-        var i = Math.floor(f);
-        var fn = ATweenInterpolationUtils.CatmullRom;
-        if (v[0] == v[m])
-        {
-            if (k < 0)
-            {
-                i = Math.floor(f = m * (1 + k));
-            }
-            return fn(v[(i - 1 + m) % m], v[i], v[(i + 1) % m], v[(i + 2) % m], f - i);
-        }
-        else
-        {
-            if (k < 0)
-            {
-                return v[0] - (fn(v[0], v[0], v[1], v[1], -f) - v[0]);
-            }
-            if (k > 1)
-            {
-                return v[m] - (fn(v[m], v[m], v[m - 1], v[m - 1], f - m) - v[m]);
-            }
-            return fn(v[i != 0 ? i - 1 : 0], v[i], v[m < i + 1 ? m : i + 1], v[m < i + 2 ? m : i + 2], f - i);
-        }
-    }
-}
-/**
- * Tween Interpolation Utils.
- */
-class ATweenInterpolationUtils
-{
-    private static a = [1];
-    public static Linear(p0: number, p1: number, t: number): number
-    {
-        return (p1 - p0) * t + p0;
-    }
-    public static Bernstein(n: number, i: number): number
-    {
-        var fc = ATweenInterpolationUtils.Factorial;
-        return fc(n) / fc(i) / fc(n - i);
-    }
-    public static Factorial(n: number): number
-    {
-        var s: number = 1;
-        if (ATweenInterpolationUtils.a[n] != 0)
-        {
-            return ATweenInterpolationUtils.a[n];
-        }
-        var i = n;
-        while (i > 1)
-        {
-            s *= i;
-            i--;
-        }
-        ATweenInterpolationUtils.a[n] = s;
-        return s;
-    }
-    public static CatmullRom(p0: number, p1: number, p2: number, p3: number, t: number): number
-    {
-        var v0 = (p2 - p0) * 0.5;
-        var v1 = (p3 - p1) * 0.5;
-        var t2 = t * t;
-        var t3 = t * t2;
-        return (2 * p1 - 2 * p2 + v0 + v1) * t3 + (-3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 + v0 * t + p1;
     }
 }

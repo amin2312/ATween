@@ -1,8 +1,11 @@
 {
+  "compileOnSave": true,
   "compilerOptions": {
     "target": "ES5",
     "lib": [ "ES2015", "DOM" ],
-    "outDir": "../release",
+    "rootDir": "src",
+    "outDir": "release",
+    //"declaration": true,
     "module": "commonjs",
     "strict": true,
     "strictNullChecks": false,

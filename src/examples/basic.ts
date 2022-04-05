@@ -1,3 +1,5 @@
+/// <reference path="../ts/ATween.ts" />
+
 /**
  * Test Units
  */
@@ -7,11 +9,29 @@ function a1(id: string)
 
     var target = { x: 0 };
     tws[id] = ATween.newTween(target, 1000).to({ x: 504 })
-        .onUpdate(function ()
+        .onUpdate(function (this: ATween, percent:number, steps:number)
         {
             document.getElementById(id).style.left = target.x + 'px';
         })
         .start();
+}
+function a6(id: string)
+{
+    clearTween(id);
+    // Implement ITweenProp interface
+    var target =
+    {
+        element: document.getElementById(id),
+        get_tween_prop: function (name: string)
+        {
+            return 0;
+        },
+        set_tween_prop: function (name: string, value: any)
+        {
+            this.element.style.setProperty(name, value + 'px');
+        }
+    }
+    tws[id] = ATween.newTween(target, 1000).to({ left: 504 }).start();
 }
 function a2(id: string)
 {
@@ -165,8 +185,7 @@ function f1(id: string)
         {
             obj.innerText = 'The timer is end';
         })
-        .callRepeat() // you can call it to init
-        .start();
+        .callRepeat(); // you can call it to init
 }
 function f2_a(id: string)
 {
@@ -185,8 +204,7 @@ function f2_a(id: string)
         , function ()
         {
             obj.innerText = 'The timer is cancel(with complete)';
-        })
-        .start();
+        });
 }
 function f2_b(id: string)
 {
@@ -208,8 +226,7 @@ function f3(id: string)
         {
             obj.innerText = 'The timer has been fired!';
             console.log(window.performance.now());
-        })
-        .start();
+        });
 }
 /**
  * Utils.

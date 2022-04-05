@@ -1,0 +1,14 @@
+{
+  "compileOnSave": true,
+  "compilerOptions": {
+    "target": "ES5",
+    "lib": ["ES5","DOM"],
+    "outDir": "release",
+    "strict": true,
+    "strictNullChecks": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src"
+  ]
+}

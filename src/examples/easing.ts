@@ -1,3 +1,6 @@
+/// <reference path="../ts/ATween.ts" />
+/// <reference path="./d/tow.d.ts" />
+
 var GAP = 50;
 function Main()
 {

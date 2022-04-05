@@ -61,7 +61,7 @@ declare module Two
     class LogicalShape
     {
         translation: Two.Vector;
-        rotation: number; // radian
+        rotation: number;
         scale: number;
 
         visible: boolean;
@@ -73,14 +73,12 @@ declare module Two
     {
         parent: Two.Group;
 
-        stroke: string; // color
-        fill: string; // color
+        stroke: string;
+        fill: string;
         linewidth: number;
-        opacity: number; // 0-1
+        opacity: number;
 
-        /** http://www.w3.org/TR/SVG/images/painting/linecap.svg */
         cap: string;
-        /** http://www.w3.org/TR/SVG/images/painting/linejoin.svg */
         join: string;
         miter: number;
 

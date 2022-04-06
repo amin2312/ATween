@@ -4,16 +4,24 @@ package ;
  * 2. Version 1.0.0
  * 3. MIT License
  *
- * ATween - a a easy, fast and tiny tween libary.
- */
-/**
  * ATween helper library - Convertor.
+ *
+ * IF you don't need custom conversion feature,
+ * YOU can compile the project without this file.
  */
+@:expose
 class ATweenConvertor
 {
     /**
-	 * RGB convert function
-	 */
+     * css unit function.
+     */
+     public static function css_unit(curValue: Float, startValue: Float, endValue: Float, percent: Float, property: String): Dynamic
+     {
+         return curValue + 'px';
+     }
+    /**
+     * css gradient convert function
+     */
     public static function css_gradient(curValue:Float, startValue:Float, endValue:Float, percent:Float, property:String):Dynamic
     {
         var R0 = ((untyped startValue) & 0xFF0000) >> 16;

@@ -3,13 +3,13 @@
  * 2. Version 1.0.0
  * 3. MIT License
  *
- * ATween - a a easy, fast and tiny tween libary.
+ * ATween - is a easy, fast and tiny tween libary.
  */
 @:expose
 class ATween
 {
     /**
-	 * Determines whether to stop all tweens.
+	 * Specifies whether to stop all tweens.
 	 */
     public static var stop:Bool = false;
     /**
@@ -42,7 +42,7 @@ class ATween
     private var _data:Dynamic = null;
 
     private var _repeatNextStartMs:Float = 0;
-    private var _repeatRefs:Float = 0;
+    private var _repeatRefs:Float = 0; // references, reference count
     private var _repeatSteps:Int = 0;
     private var _repeatDelayMs:Float = 0;
     private var _updateSteps:Float = 0;
@@ -54,11 +54,11 @@ class ATween
     private var _yoyo = false;
     private var _isCompleted = false;
     private var _pause:Bool = false;
-    private var _retain = false;
+    private var _isRetained = false;
     private var _easing:Float -> Float = null;
     /**
 	 * The callback functions.
-	**/
+	 **/
     private var _onStartCallback:Void -> Void = null;
     private var _isStarted:Bool = false;
     private var _onStartCallbackFired:Bool = false;
@@ -110,8 +110,8 @@ class ATween
     }
     /**
 	 * Kill all tweens.
-	 * ! When the tween is retain, then it will be ignored.	 
-	 * @param withComplete Indicates whether to call complete function.
+	 * WHEN the tween is retain, then it will be ignored.	 
+	 * @param withComplete Specifies whether to call complete function.
 	 */
     public static function killAll(completed:Bool = false):Void
     {
@@ -122,9 +122,9 @@ class ATween
         }
     }
     /**
-	 * Kill all tweens of indicated the target or attachment.
+	 * Kill all tweens of specified the target or attachment.
 	 * @param targetOrAttachment the target or attachment.
-	 * @param withComplete Indicates whether to call complete function.
+	 * @param withComplete Specifies whether to call complete function.
 	 * @returns Number of killed instances
 	 */
     public static function killTweens(targetOrAttachment:Dynamic, completed:Bool = false):Void
@@ -143,7 +143,7 @@ class ATween
     }
     /**
 	 * Check the target or attachment is tweening.
-	 * @param target As name mean. 
+     * @param targetOrAttachment the target or attachment.
 	 */
     public static function isTweening(targetOrAttachment:Dynamic):Bool
     {
@@ -165,7 +165,7 @@ class ATween
         _target = target;
     }
     /**
-	 * As name mean.
+	 * Checks whether has installed frame trigger in current environment.
 	 */
     private static function checkInstalled():Void
     {
@@ -192,9 +192,9 @@ class ATween
     }
     /**
 	 * Create a tween.
-	 * @param target It must be a object. 
+	 * @param target the targer object.
 	 * @param durationMs set duration, not including any repeats or delays.
-	 * @param delayMs set initial delay which is the length of time in ms before the animation should begin.
+	 * @param delayMs set initial delay which is the length of time in ms before the tween should begin.
 	 * @returns Tween instance
 	 */
     public static function newTween(target:Dynamic, durationMs:Float, delayMs:Float = 0):ATween
@@ -207,10 +207,11 @@ class ATween
     }
     /**
 	 * Create a once timer.
-	 * It will auto start.
+	 * It will auto start,
+     * YOU don't need to call 'start()' function.
 	 * @param intervalMs interval millisecond
-	 * @param onCompleteCallback The callback function when complete.
-	 * @param onCompleteParams The callback parameters when complete.
+	 * @param onCompleteCallback The callback function when completion.
+	 * @param onCompleteParams The callback parameters when completion.
 	 * @returns Tween instance
 	 */
     public static function newOnce(intervalMs:Float, onCompleteCallback:Dynamic, onCompleteParams:Array<Dynamic> = null):ATween
@@ -224,12 +225,13 @@ class ATween
     }
     /**
 	 * Create a timer.
-	 * It will auto start.
+	 * It will auto start,
+     * YOU don't need to call 'start()' function.
 	 * @param intervalMs interval millisecond
 	 * @param times Repeat Times(-1 is infinity)
-	 * @param onRepeatCallback  if return false, then will cancel this timer.
-	 * @param onCompleteCallback The callback function when complete.
-	 * @param onCompleteParams The callback parameters when complete.
+	 * @param onRepeatCallback  IF return false, then will cancel this timer.
+	 * @param onCompleteCallback The callback function when completion.
+	 * @param onCompleteParams The callback parameters when completion.
 	 * @returns Tween instance
 	**/
     public static function newTimer(intervalMs:Float, times:Int, onRepeatCallback:Int -> Bool, onCompleteCallback:Dynamic = null, onCompleteParams:Array<Dynamic> = null):ATween
@@ -272,6 +274,10 @@ class ATween
 	 */
     private function initTarget():Void
     {
+        if (_initedTarget)
+        {
+            return;
+        }
         var fields = Reflect.fields(_dstVals);
         for (property in fields)
         {
@@ -292,24 +298,17 @@ class ATween
             // !! Convert Empty value(null, false, '') to 0
             curVal *= 1.0;
             // create source values
-            if (this._srcVals == null)
-            {
-                this._srcVals = {};
-            }
+            this._srcVals = {};
             this._srcVals[untyped property] = curVal;
             // create reverse values set
-            if (this._revVals == null)
-            {
-                this._revVals = {};
-            }
+            this._revVals = {};
             this._revVals[untyped property] = curVal;
         }
         _initedTarget = true;
     }
-
     /**
 	 * Update target.
-	**/
+	 */
     private function updateTarget(percent:Float, ignoreCallback:Bool = false):Void
     {
         if (_target == null)
@@ -349,7 +348,7 @@ class ATween
 			{
 				this._target[untyped property] = newVal;
 			}
-            // sync value to bind object
+            // sync value to attachment object
             if (this._attachment != null)
             {
                 var syncVal:Dynamic;
@@ -360,7 +359,7 @@ class ATween
                 }
                 else
                 {
-                    syncVal = Math.floor(newVal) + 'px';
+                    syncVal = Math.floor(newVal);
                 }
                 #if js
 				var e: js.html.Element = cast this._attachment;
@@ -380,9 +379,9 @@ class ATween
             #end
         }
     }
-
     /**
 	 * Update tween by the specified time.
+	 * @param ms millisecond unit
 	 */
     public function update(ms:Float):Bool
     {
@@ -429,7 +428,7 @@ class ATween
         }
         // update target
         updateTarget(elapsedPercent);
-        // 3.结束处理
+        // end processing
         if (elapsedPercent == 1)
         {
             if (_repeatRefs != 0)
@@ -490,15 +489,14 @@ class ATween
         }
         return true;
     }
-
     /**
 	 * Cancel.
-	 * @param withComplete indicate that whether call complete function.
+	 * @param withComplete Specifies whether to call complete function.
 	 * @returns Tween instance
 	 */
     public function cancel(complete:Bool = false)
     {
-        if (_isCompleted == true || _retain == true)
+        if (_isCompleted == true || _isRetained == true)
         {
             return this;
         }
@@ -521,29 +519,32 @@ class ATween
         }
         return this;
     }
-
     /**
-	 * The destination value that the target wants to achieve.
+	 * The destination value that the target wants to achieves.
 	 * @param endValus destination values.
 	 * @returns Tween instance
 	 */
-    public function to(properties:Dynamic):ATween
+    public function to(endValus:Dynamic):ATween
     {
-        _dstVals = properties;
+        _dstVals = endValus;
         return this;
     }
 	#if js
     /**
      * Attach to HTMLElement element(The new tween value will auto sync to it).
      * @param obj HTMLElement or element id
-     * @param convert the tween value convertor for obj(like number to RGB)
+     * @param convert the tween value convertor.
      * @returns Tween instance
      */
-	public function attach(obj:Dynamic, convert:Float->Float->Float->Float->String->Dynamic = null):ATween {
+	public function attach(obj:Dynamic, convert:Float->Float->Float->Float->String->Dynamic = null):ATween
+    {
 		var t:js.html.Element;
-		if (Std.instance(obj, js.html.Element) != null) {
+		if (Std.instance(obj, js.html.Element) != null)
+        {
 			t = cast obj;
-		} else {
+		}
+        else
+        {
 			t = cast js.Browser.document.getElementById(obj);
 		}
 		this._attachment = t;
@@ -559,10 +560,9 @@ class ATween
         this._data = v;
         return this;
     }
-
     /**
-	 * Set repeat times.
-	 * @param times As name mean
+	 * Set repeat execution.
+	 * @param times the repeat time
 	 * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
 	 * @param delayMs delay trigger time
 	 * @returns Tween instance
@@ -575,11 +575,9 @@ class ATween
         _repeatDelayMs = delayMs;
         return this;
     }
-
     /**
 	 * Immediate call the repeat function.
-	 * @remark
-	 * You need init the env in sometimes, then it's a good choice.
+     * IF you need to init the environment, then it's a good choice.
 	 * @returns Tween instance
 	 */
     public function callRepeat():ATween
@@ -597,7 +595,6 @@ class ATween
         }
         return this;
     }
-
     /**
 	 * Set easing function.
 	 * @returns Tween instance
@@ -607,36 +604,32 @@ class ATween
         _easing = cast v; // add cast for avoid haxe redundant compilation in some languages.
         return this;
     }
-
     /**
 	 * Keep this tween, killAll has no effect on it.
 	 * @returns Tween instance
 	 */
     inline public function retain():ATween
     {
-        _retain = true;
+        _isRetained = true;
         return this;
     }
-
     /**
-	 * Release the retain tween.
+	 * Release the retained tween.
 	 * @returns Tween instance
 	 */
     inline public function release():ATween
     {
-        _retain = false;
+        _isRetained = false;
         return this;
     }
-
     /**
-	 * Determine whether the tween is keeping.
+     * Indicates whether the tween is keeping.
 	 * @returns Tween instance
 	 */
     inline public function isRetain():Bool
     {
-        return _retain;
+        return _isRetained;
     }
-
     /**
 	 * Set pause state.
 	 */
@@ -644,7 +637,6 @@ class ATween
     {
         _pause = v;
     }
-
     /**
 	 * Get pause state.
 	 */
@@ -652,7 +644,6 @@ class ATween
     {
         return _pause;
     }
-
     /**
 	 * Get repeat times.
 	 */
@@ -660,7 +651,6 @@ class ATween
     {
         return _repeatTimes;
     }
-
     /**
 	 * Get target.
 	 */
@@ -668,7 +658,6 @@ class ATween
     {
         return _target;
     }
-
     /**
 	 * Get attachment.
 	 */
@@ -676,7 +665,6 @@ class ATween
     {
         return _attachment;
     }
-
     /**
 	 * Get data.
 	 */
@@ -684,9 +672,8 @@ class ATween
     {
         return _data;
     }
-
     /**
-	 * Set the callback function when the tween start.
+     * Set the callback function when startup.
 	 * @returns Tween instance
 	 */
     public function onStart(callback:Void -> Void):ATween
@@ -694,9 +681,8 @@ class ATween
         _onStartCallback = cast callback; // add cast for avoid haxe redundant compilation in some languages.
         return this;
     }
-
     /**
-	 * Set the callback function when the tween's value has updated.
+	 * Set the callback function when the updating.
 	 * @returns Tween instance
 	 */
     public function onUpdate(callback:Float -> Float -> Void):ATween
@@ -704,9 +690,8 @@ class ATween
         _onUpdateCallback = cast callback; // add cast for avoid haxe redundant compilation in some languages.
         return this;
     }
-
     /**
-	 * Set the callback function when the tween is completed.
+	 * Set the callback function when completion.
 	 * @returns Tween instance
 	 */
     public function onComplete(callback:Dynamic, params:Array<Dynamic> = null):ATween
@@ -720,7 +705,7 @@ class ATween
         return this;
     }
     /**
-	 * Set the callback function when the tween is canceled.
+     * Set the callback function when canceled.
 	 * @returns Tween instance
 	 */
     public function onCancel(callback:Void -> Void):ATween
@@ -728,30 +713,39 @@ class ATween
         _onCancelCallback = cast callback; // add cast for avoid haxe redundant compilation in some languages.
         return this;
     }
-
+    /**
+     * Set the callback function when repeating.
+     * @returns Tween instance
+     */
     public function onRepeat(callback:Int -> Bool):ATween
     {
         _onRepeatCallback = cast callback; // add cast for avoid haxe redundant compilation in some languages.
         return this;
     }
     /**
-	 * Extend - Common "to" Functions
+	 * Simplified function for "to" - set alpha.
 	 */
     public function toAlpha(v:Float):ATween
     {
         return to({alpha:v});
     }
-
+    /**
+	 * Simplified function for "to" - set crood x.
+	 */
     public function toX(v:Float):ATween
     {
         return to({x:v});
     }
-
+    /**
+	 * Simplified function for "to" - set crood y.
+	 */
     public function toY(v:Float):ATween
     {
         return to({y:v});
     }
-
+    /**
+	 * Simplified function for "to" - set crood x and y.
+	 */
     public function toXY(a:Float, b:Float):ATween
     {
         return to({x:a, y:b});

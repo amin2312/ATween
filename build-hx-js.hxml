@@ -1,3 +1,2 @@
--cp src
-ATween
--js release/ATweenHx.js
+--class-path src/hx
+-js release/ATween.hx.js

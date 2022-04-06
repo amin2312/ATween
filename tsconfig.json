@@ -1,14 +1,17 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
-    "target": "ES5",
-    "lib": [ "ES2015", "DOM" ],
-    "rootDir": "src",
-    "outDir": "release",
-    //"declaration": true,
-    "module": "commonjs",
+    //"declaration": true, // generate d.ts
     "strict": true,
     "strictNullChecks": false,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "target": "ES5",
+    "rootDir": "src",
+
+    "outDir": "release",
+    "outFile": "release/ATween.ts.js",
+  },
+  "exclude": [
+    "src/examples"
+  ]
 }

@@ -1,4 +1,3 @@
-package ;
 /**
  * 1. Copyright (c) 2022 amin2312
  * 2. Version 1.0.0
@@ -9,28 +8,27 @@ package ;
  * IF you don't need custom easing feature,
  * YOU can compile the project without this file.
  */
-@:expose
 class ATweenEasing
 {
     /**
-	 * Linear
-	 */
-    public static function Linear(k:Float):Float
+     * Linear
+     */
+    public static Linear(k: number): number
     {
         return k;
     }
     /**
-	 * Quadratic
-	 */
-    public static function QuadraticIn(k:Float):Float
+     * Quadratic
+     */
+    public static QuadraticIn(k: number): number
     {
         return k * k;
     }
-    public static function QuadraticOut(k:Float):Float
+    public static QuadraticOut(k: number): number
     {
         return k * (2 - k);
     }
-    public static function QuadraticInOut(k:Float):Float
+    public static QuadraticInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -39,17 +37,17 @@ class ATweenEasing
         return -0.5 * (--k * (k - 2) - 1);
     }
     /**
-	 * Cubic
-	 */
-    public static function CubicIn(k:Float):Float
+     * Cubic
+     */
+    public static CubicIn(k: number): number
     {
         return k * k * k;
     }
-    public static function CubicOut(k:Float):Float
+    public static CubicOut(k: number): number
     {
         return --k * k * k + 1;
     }
-    public static function CubicInOut(k:Float):Float
+    public static CubicInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -58,17 +56,17 @@ class ATweenEasing
         return 0.5 * ((k -= 2) * k * k + 2);
     }
     /**
-	 * Quartic.
-	 */
-    public static function QuarticIn(k:Float):Float
+     * Quartic.
+     */
+    public static QuarticIn(k: number): number
     {
         return k * k * k * k;
     }
-    public static function QuarticOut(k:Float):Float
+    public static QuarticOut(k: number): number
     {
         return 1 - (--k * k * k * k);
     }
-    public static function QuarticInOut(k:Float):Float
+    public static QuarticInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -77,17 +75,17 @@ class ATweenEasing
         return -0.5 * ((k -= 2) * k * k * k - 2);
     }
     /**
-	 * Quintic.
-	 */
-    public static function QuinticIn(k:Float):Float
+     * Quintic.
+     */
+    public static QuinticIn(k: number): number
     {
         return k * k * k * k * k;
     }
-    public static function QuinticOut(k:Float):Float
+    public static QuinticOut(k: number): number
     {
         return --k * k * k * k * k + 1;
     }
-    public static function QuinticInOut(k:Float):Float
+    public static QuinticInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -96,32 +94,32 @@ class ATweenEasing
         return 0.5 * ((k -= 2) * k * k * k * k + 2);
     }
     /**
-	 * Sinusoidal.
-	 */
-    public static function SinusoidalIn(k:Float):Float
+     * Sinusoidal.
+     */
+    public static SinusoidalIn(k: number): number
     {
         return 1 - Math.cos(k * Math.PI / 2);
     }
-    public static function SinusoidalOut(k:Float):Float
+    public static SinusoidalOut(k: number): number
     {
         return Math.sin(k * Math.PI / 2);
     }
-    public static function SinusoidalInOut(k:Float):Float
+    public static SinusoidalInOut(k: number): number
     {
         return 0.5 * (1 - Math.cos(Math.PI * k));
     }
     /**
-	 * Exponential.
-	 */
-    public static function ExponentialIn(k:Float):Float
+     * Exponential.
+     */
+    public static ExponentialIn(k: number): number
     {
         return k == 0 ? 0 : Math.pow(1024, k - 1);
     }
-    public static function ExponentialOut(k:Float):Float
+    public static ExponentialOut(k: number): number
     {
         return k == 1 ? 1 : 1 - Math.pow(2, -10 * k);
     }
-    public static function ExponentialInOut(k:Float):Float
+    public static ExponentialInOut(k: number): number
     {
         if (k == 0)
         {
@@ -138,17 +136,17 @@ class ATweenEasing
         return 0.5 * (-Math.pow(2, -10 * (k - 1)) + 2);
     }
     /**
-	 * Circular.
-	 */
-    public static function CircularIn(k:Float):Float
+     * Circular.
+     */
+    public static CircularIn(k: number): number
     {
         return 1 - Math.sqrt(1 - k * k);
     }
-    public static function CircularOut(k:Float):Float
+    public static CircularOut(k: number): number
     {
         return Math.sqrt(1 - (--k * k));
     }
-    public static function CircularInOut(k:Float):Float
+    public static CircularInOut(k: number): number
     {
         if ((k *= 2) < 1)
         {
@@ -157,9 +155,9 @@ class ATweenEasing
         return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
     }
     /**
-	 * Elastic.
-	 */
-    public static function ElasticIn(k:Float):Float
+     * Elastic.
+     */
+    public static ElasticIn(k: number): number
     {
         if (k == 0)
         {
@@ -171,7 +169,7 @@ class ATweenEasing
         }
         return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
     }
-    public static function ElasticOut(k:Float):Float
+    public static ElasticOut(k: number): number
     {
         if (k == 0)
         {
@@ -183,7 +181,7 @@ class ATweenEasing
         }
         return Math.pow(2, -10 * k) * Math.sin((k - 0.1) * 5 * Math.PI) + 1;
     }
-    public static function ElasticInOut(k:Float):Float
+    public static ElasticInOut(k: number): number
     {
         if (k == 0)
         {
@@ -201,19 +199,19 @@ class ATweenEasing
         return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
     }
     /**
-	 * Back.
-	 */
-    public static function BackIn(k:Float):Float
+     * Back.
+     */
+    public static BackIn(k: number): number
     {
         var s = 1.70158;
         return k * k * ((s + 1) * k - s);
     }
-    public static function BackOut(k:Float):Float
+    public static BackOut(k: number): number
     {
         var s = 1.70158;
         return --k * k * ((s + 1) * k + s) + 1;
     }
-    public static function BackInOut(k:Float):Float
+    public static BackInOut(k: number): number
     {
         var s = 1.70158 * 1.525;
         if ((k *= 2) < 1)
@@ -223,13 +221,13 @@ class ATweenEasing
         return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
     }
     /**
-	 * Bounce.
-	 */
-    public static function BounceIn(k:Float):Float
+     * Bounce.
+     */
+    public static BounceIn(k: number): number
     {
         return 1 - ATweenEasing.BounceOut(1 - k);
     }
-    public static function BounceOut(k:Float):Float
+    public static BounceOut(k: number): number
     {
         if (k < (1 / 2.75))
         {
@@ -248,7 +246,7 @@ class ATweenEasing
             return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375;
         }
     }
-    public static function BounceInOut(k:Float):Float
+    public static BounceInOut(k: number): number
     {
         if (k < 0.5)
         {

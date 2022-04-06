@@ -3,12 +3,12 @@
  * 2. Version 1.0.0
  * 3. MIT License
  *
- * ATween - a a easy, fast and tiny tween libary.
+ * ATween - is a easy, fast and tiny tween libary.
  */
 class ATween
 {
     /**
-     * Determines whether to stop all tweens.
+     * Specifies whether to stop all tweens.
      */
     public static stop: boolean = false;
     /**
@@ -30,7 +30,7 @@ class ATween
     /**
      * Params of tween.
      */
-    private _target: any | ITweenProp;
+    private _target: any | ATweenInterface;
     private _initedTarget: boolean = false;
     private _srcVals: { [key: string]: number };
     private _dstVals: { [key: string]: number };
@@ -53,7 +53,7 @@ class ATween
     private _yoyo: boolean = false;
     private _isCompleted = false;
     private _pause: boolean = false;
-    private _retain: boolean = false;
+    private _isRetained: boolean = false;
     private _easing: (k: number) => number = null;
     /**
      * The callback functions.
@@ -112,8 +112,8 @@ class ATween
     /**
      * Kill all tweens.
      * @remarks
-     * When the tween is retain, then it will be ignored.
-     * @param withComplete Indicates whether to call complete function.
+	 * WHEN the tween is retain, then it will be ignored.	
+     * @param withComplete Specifies whether to call complete function.
      */
     public static killAll(withComplete: boolean = false): void
     {
@@ -126,9 +126,9 @@ class ATween
         }
     }
     /**
-     * Kill all tweens of indicated the target or attachment.
+     * Kill all tweens of specified the target or attachment.
      * @param targetOrAttachment the target or attachment.
-     * @param withComplete Indicates whether to call complete function.
+     * @param withComplete Specifies whether to call complete function.
      * @returns Number of killed instances
      */
     public static killTweens(targetOrAttachment: any, withComplete: boolean = false): number
@@ -149,7 +149,7 @@ class ATween
     }
     /**
      * Check the target or attachment is tweening.
-     * @param target As name mean.
+     * @param targetOrAttachment the target or attachment.
      */
     public static isTweening(targetOrAttachment: any): boolean
     {
@@ -168,12 +168,12 @@ class ATween
     /**
      * Constructor.
      */
-    constructor(target: any | ITweenProp)
+    constructor(target: any | ATweenInterface)
     {
         this._target = target;
     }
     /**
-     * As name mean.
+     * Checks whether has installed frame trigger in current environment.
      */
     private static checkInstalled(): void
     {
@@ -201,11 +201,9 @@ class ATween
     }
     /**
      * Create a tween.
-     * @remarks
-     * Don't reuse the tween instance, it's one-time
-     * @param target It must be a object. 
+     * @param target the targer object.
      * @param durationMs set duration, not including any repeats or delays.
-     * @param delayMs set initial delay which is the length of time in ms before the animation should begin.
+     * @param delayMs set initial delay which is the length of time in ms before the tween should begin.
      * @returns Tween instance
      */
     public static newTween(target: any, durationMs: number, delayMs: number = 0): ATween
@@ -219,10 +217,10 @@ class ATween
     /**
      * Create a once timer.
      * @remarks
-     * Don't reuse the tween instance, it's one-time
+	 * It will auto start, you don't need to call 'start()' function.
      * @param intervalMs interval millisecond
-     * @param onCompleteCallback The callback function when complete.
-     * @param onCompleteParams The callback parameters when complete.
+     * @param onCompleteCallback The callback function when completion.
+     * @param onCompleteParams The callback parameters when completion.
      * @returns Tween instance
      */
     public static newOnce(intervalMs: number, onCompleteCallback: any, onCompleteParams: Array<any> = null): ATween
@@ -235,14 +233,14 @@ class ATween
         return t;
     }
     /**
-     * Create a timer.
+	 * Create a timer.
      * @remarks
-     * Don't reuse the tween instance, it's one-time
-     * @param intervalMs As name mean(unit:ms)
+	 * It will auto start, you don't need to call 'start()' function.
+	 * @param intervalMs interval millisecond
      * @param times Repeat Times(-1 is infinity)
-     * @param onRepeatCallback  if return false, then will cancel this timer.
-     * @param onCompleteCallback The callback function when complete.
-     * @param onCompleteParams The callback parameters when complete.
+     * @param onRepeatCallback  IF return false, then will cancel this timer.
+     * @param onCompleteCallback The callback function when completion.
+     * @param onCompleteParams The callback parameters when completion.
      * @returns Tween instance
      **/
     public static newTimer(intervalMs: number, times: number, onRepeatCallback: (steps: number) => boolean, onCompleteCallback: any = null, onCompleteParams: Array<any> = null): ATween
@@ -285,12 +283,16 @@ class ATween
      */
     private initTarget(): void
     {
+        if (this._initedTarget)
+        {
+            return;
+        }
         for (var property in this._dstVals)
         {
             var curVal: any;
-            if ((this._target as ITweenProp).get_tween_prop != null)
+            if ((this._target as ATweenInterface).get_tween_prop != null)
             {
-                curVal = (this._target as ITweenProp).get_tween_prop(property);
+                curVal = (this._target as ATweenInterface).get_tween_prop(property);
             }
             else
             {
@@ -304,16 +306,10 @@ class ATween
             // !! Convert Empty value(null, false, '') to 0
             curVal *= 1.0;
             // create source values
-            if (this._srcVals == null)
-            {
-                this._srcVals = {};
-            }
+            this._srcVals = {};
             this._srcVals[property] = curVal;
             // create reverse values set
-            if (this._revVals == null)
-            {
-                this._revVals = {};
-            }
+            this._revVals = {};
             this._revVals[property] = curVal;
         }
         this._initedTarget = true;
@@ -351,15 +347,15 @@ class ATween
             {
                 newVal = startVal + (endVal - startVal) * ePercent;
             }
-            if ((this._target as ITweenProp).set_tween_prop != null)
+            if ((this._target as ATweenInterface).set_tween_prop != null)
             {
-                (this._target as ITweenProp).set_tween_prop(property, newVal);
+                (this._target as ATweenInterface).set_tween_prop(property, newVal);
             }
             else
             {
                 this._target[property] = newVal;
             }
-            // sync value to bind object
+            // sync value to attachment object
             if (this._attachment != null)
             {
                 var syncVal: any;
@@ -384,7 +380,8 @@ class ATween
         }
     }
     /**
-     * Update tween by the specified time.
+	 * Update tween by the specified time.
+	 * @param ms millisecond unit
      */
     public update(ms: number): boolean
     {
@@ -480,12 +477,12 @@ class ATween
     }
     /**
      * Cancel.
-     * @param withComplete indicate that whether call complete function.
+     * @param withComplete Specifies whether to call complete function.
      * @returns Tween instance
      */
     public cancel(withComplete: boolean = false): void
     {
-        if (this._isCompleted == true || this._retain == true)
+        if (this._isCompleted == true || this._isRetained == true)
         {
             return;
         }
@@ -504,7 +501,7 @@ class ATween
         }
     }
     /**
-     * The destination value that the target wants to achieve.
+     * The destination value that the target wants to achieves.
      * @param endValus destination values.
      * @returns Tween instance
      */
@@ -516,7 +513,7 @@ class ATween
     /**
      * Attach to HTMLElement element(The new tween value will auto sync to it).
      * @param obj HTMLElement or element id
-     * @param convert the tween value convertor for obj(like number to RGB)
+     * @param convert the tween value convertor.
      * @returns Tween instance
      */
     public attach(obj: HTMLElement | string, convert: (curValue: number, startValue: number, endValue: number, percent: number, property: string) => any = null): ATween
@@ -543,8 +540,8 @@ class ATween
         return this;
     }
     /**
-     * Set repeat times.
-     * @param times As name mean
+     * Set repeat execution.
+     * @param times the repeat time
      * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
      * @param delayMs delay trigger time
      * @returns Tween instance
@@ -560,7 +557,7 @@ class ATween
     /**
      * Immediate call the repeat function.
      * @remark
-     * You need init the env in sometimes, then it's a good choice.
+     * IF you need to init the environment, then it's a good choice.
      * @returns Tween instance
      */
     public callRepeat(): ATween
@@ -579,7 +576,7 @@ class ATween
      */
     public easing(func: (v: number) => number): ATween
     {
-        this._easing = func;
+        this._easing = func
         return this;
     }
     /**
@@ -588,25 +585,25 @@ class ATween
      */
     public retain(): ATween
     {
-        this._retain = true;
+        this._isRetained = true;
         return this;
     }
     /**
-     * Release the retain tween.
+     * Release the retained tween.
      * @returns Tween instance
      */
     public release(): ATween
     {
-        this._retain = false;
+        this._isRetained = false;
         return this;
     }
     /**
-     * Determine whether the tween is keeping.
+     * Indicates whether the tween is keeping.
      * @returns Tween instance
      */
     public isRetain(): boolean
     {
-        return this._retain;
+        return this._isRetained;
     }
     /**
      * Set pause state.
@@ -651,7 +648,7 @@ class ATween
         return this._data;
     }
     /**
-     * Set the callback function when the tween start.
+     * Set the callback function when startup.
      * @returns Tween instance
      */
     public onStart(callback: () => void): ATween
@@ -660,7 +657,7 @@ class ATween
         return this;
     }
     /**
-     * Set the callback function when the tween's value has updated.
+     * Set the callback function when updating.
      * @returns Tween instance
      */
     public onUpdate(callback: (percent: number, times: number) => void): ATween
@@ -669,7 +666,7 @@ class ATween
         return this;
     }
     /**
-     * Set the callback function when the tween is completed.
+     * Set the callback function when completion.
      * @returns Tween instance
      */
     public onComplete(callback: (...argArray: any[]) => void, params: Array<any> = null): ATween
@@ -683,7 +680,7 @@ class ATween
         return this;
     }
     /**
-     * Set the callback function when the tween is canceled.
+     * Set the callback function when canceled.
      * @returns Tween instance
      */
     public onCancel(callback: () => void): ATween
@@ -692,7 +689,7 @@ class ATween
         return this;
     }
     /**
-     * Set the callback function when the tween is repeated.
+     * Set the callback function when repeating.
      * @returns Tween instance
      */
     public onRepeat(callback: (steps: number) => boolean): ATween
@@ -700,305 +697,32 @@ class ATween
         this._onRepeatCallback = callback;
         return this;
     }
-}
-/**
- * Tween Property Interface.
- * If the target has implement this interface, Then the tween will use it first to update the target.
- */
-interface ITweenProp
-{
     /**
-     * Get tween property. 
-     **/
-    get_tween_prop(name: String): any;
-    /**
-     * Set tween property.
-     **/
-    set_tween_prop(name: String, value: any): void;
-}
-/**
- *  * Tween Convertor.
- */
-class ATweenConvertor
-{
-    /**
-     * css unit function.
-     */
-    public static css_unit(curValue: number, startValue: number, endValue: number, percent: number, property: string): any
+	 * Simplified function for "to" - set alpha.
+	 */
+    public toAlpha(v:number):ATween
     {
-        return curValue + 'px';
+        return this.to({alpha:v});
     }
     /**
-     * css gradient convert function
-     */
-    public static css_gradient(curValue: number, startValue: number, endValue: number, percent: number, property: string): any
+	 * Simplified function for "to" - set crood x.
+	 */
+    public toX(v:number):ATween
     {
-        var R0 = (startValue & 0xFF0000) >> 16;
-        var G0 = (startValue & 0x00FF00) >> 8;
-        var B0 = (startValue & 0x0000FF);
-        var R1 = (endValue & 0xFF0000) >> 16;
-        var G1 = (endValue & 0x00FF00) >> 8;
-        var B1 = (endValue & 0x0000FF);
-        var R = Math.floor(R1 * percent + (1 - percent) * R0);
-        var G = Math.floor(G1 * percent + (1 - percent) * G0);
-        var B = Math.floor(B1 * percent + (1 - percent) * B0);
-
-        var color = (R << 16) | (G << 8) | B;
-        var s = color.toString(16);
-        for (var i = s.length; i < 6; i++)
-        {
-            s = '0' + s;
-        }
-        return "#" + s;
-    }
-}
-/**
- * Tween Easing.
- */
-class ATweenEasing
-{
-    /**
-     * Linear
-     */
-    public static Linear(k: number): number
-    {
-        return k;
+        return this.to({x:v});
     }
     /**
-     * Quadratic
-     */
-    public static QuadraticIn(k: number): number
+	 * Simplified function for "to" - set crood y.
+	 */
+    public toY(v:number):ATween
     {
-        return k * k;
-    }
-    public static QuadraticOut(k: number): number
-    {
-        return k * (2 - k);
-    }
-    public static QuadraticInOut(k: number): number
-    {
-        if ((k *= 2) < 1)
-        {
-            return 0.5 * k * k;
-        }
-        return -0.5 * (--k * (k - 2) - 1);
+        return this.to({y:v});
     }
     /**
-     * Cubic
-     */
-    public static CubicIn(k: number): number
+	 * Simplified function for "to" - set crood x and y.
+	 */
+    public toXY(a:number, b:number):ATween
     {
-        return k * k * k;
-    }
-    public static CubicOut(k: number): number
-    {
-        return --k * k * k + 1;
-    }
-    public static CubicInOut(k: number): number
-    {
-        if ((k *= 2) < 1)
-        {
-            return 0.5 * k * k * k;
-        }
-        return 0.5 * ((k -= 2) * k * k + 2);
-    }
-    /**
-     * Quartic.
-     */
-    public static QuarticIn(k: number): number
-    {
-        return k * k * k * k;
-    }
-    public static QuarticOut(k: number): number
-    {
-        return 1 - (--k * k * k * k);
-    }
-    public static QuarticInOut(k: number): number
-    {
-        if ((k *= 2) < 1)
-        {
-            return 0.5 * k * k * k * k;
-        }
-        return -0.5 * ((k -= 2) * k * k * k - 2);
-    }
-    /**
-     * Quintic.
-     */
-    public static QuinticIn(k: number): number
-    {
-        return k * k * k * k * k;
-    }
-    public static QuinticOut(k: number): number
-    {
-        return --k * k * k * k * k + 1;
-    }
-    public static QuinticInOut(k: number): number
-    {
-        if ((k *= 2) < 1)
-        {
-            return 0.5 * k * k * k * k * k;
-        }
-        return 0.5 * ((k -= 2) * k * k * k * k + 2);
-    }
-    /**
-     * Sinusoidal.
-     */
-    public static SinusoidalIn(k: number): number
-    {
-        return 1 - Math.cos(k * Math.PI / 2);
-    }
-    public static SinusoidalOut(k: number): number
-    {
-        return Math.sin(k * Math.PI / 2);
-    }
-    public static SinusoidalInOut(k: number): number
-    {
-        return 0.5 * (1 - Math.cos(Math.PI * k));
-    }
-    /**
-     * Exponential.
-     */
-    public static ExponentialIn(k: number): number
-    {
-        return k == 0 ? 0 : Math.pow(1024, k - 1);
-    }
-    public static ExponentialOut(k: number): number
-    {
-        return k == 1 ? 1 : 1 - Math.pow(2, -10 * k);
-    }
-    public static ExponentialInOut(k: number): number
-    {
-        if (k == 0)
-        {
-            return 0;
-        }
-        if (k == 1)
-        {
-            return 1;
-        }
-        if ((k *= 2) < 1)
-        {
-            return 0.5 * Math.pow(1024, k - 1);
-        }
-        return 0.5 * (-Math.pow(2, -10 * (k - 1)) + 2);
-    }
-    /**
-     * Circular.
-     */
-    public static CircularIn(k: number): number
-    {
-        return 1 - Math.sqrt(1 - k * k);
-    }
-    public static CircularOut(k: number): number
-    {
-        return Math.sqrt(1 - (--k * k));
-    }
-    public static CircularInOut(k: number): number
-    {
-        if ((k *= 2) < 1)
-        {
-            return -0.5 * (Math.sqrt(1 - k * k) - 1);
-        }
-        return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
-    }
-    /**
-     * Elastic.
-     */
-    public static ElasticIn(k: number): number
-    {
-        if (k == 0)
-        {
-            return 0;
-        }
-        if (k == 1)
-        {
-            return 1;
-        }
-        return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
-    }
-    public static ElasticOut(k: number): number
-    {
-        if (k == 0)
-        {
-            return 0;
-        }
-        if (k == 1)
-        {
-            return 1;
-        }
-        return Math.pow(2, -10 * k) * Math.sin((k - 0.1) * 5 * Math.PI) + 1;
-    }
-    public static ElasticInOut(k: number): number
-    {
-        if (k == 0)
-        {
-            return 0;
-        }
-        if (k == 1)
-        {
-            return 1;
-        }
-        k *= 2;
-        if (k < 1)
-        {
-            return -0.5 * Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
-        }
-        return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
-    }
-    /**
-     * Back.
-     */
-    public static BackIn(k: number): number
-    {
-        var s = 1.70158;
-        return k * k * ((s + 1) * k - s);
-    }
-    public static BackOut(k: number): number
-    {
-        var s = 1.70158;
-        return --k * k * ((s + 1) * k + s) + 1;
-    }
-    public static BackInOut(k: number): number
-    {
-        var s = 1.70158 * 1.525;
-        if ((k *= 2) < 1)
-        {
-            return 0.5 * (k * k * ((s + 1) * k - s));
-        }
-        return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
-    }
-    /**
-     * Bounce.
-     */
-    public static BounceIn(k: number): number
-    {
-        return 1 - ATweenEasing.BounceOut(1 - k);
-    }
-    public static BounceOut(k: number): number
-    {
-        if (k < (1 / 2.75))
-        {
-            return 7.5625 * k * k;
-        }
-        else if (k < (2 / 2.75))
-        {
-            return 7.5625 * (k -= (1.5 / 2.75)) * k + 0.75;
-        }
-        else if (k < (2.5 / 2.75))
-        {
-            return 7.5625 * (k -= (2.25 / 2.75)) * k + 0.9375;
-        }
-        else
-        {
-            return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375;
-        }
-    }
-    public static BounceInOut(k: number): number
-    {
-        if (k < 0.5)
-        {
-            return ATweenEasing.BounceIn(k * 2) * 0.5;
-        }
-        return ATweenEasing.BounceOut(k * 2 - 1) * 0.5 + 0.5;
+        return this.to({x:a, y:b});
     }
 }

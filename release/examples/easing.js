@@ -44,6 +44,9 @@ function onEasingUpdate(p, times) {
 }
 function onEasingComplete() {
     var two = this.getData();
-    two.pause();
+    // render last time for completion
+    setTimeout(function () {
+        two.pause();
+    }, 1);
 }
 Main();

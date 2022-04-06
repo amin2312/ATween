@@ -28,7 +28,7 @@ var ATween = /** @class */ (function () {
         this._repeatSteps = 0;
         this._repeatDelayMs = 0;
         this._updateSteps = 0;
-        this._fixPercent0 = false;
+        this._isFirstUpdate = true;
         this._startMs = 0;
         this._delayMs = 0;
         this._durationMs = 1;
@@ -229,6 +229,7 @@ var ATween = /** @class */ (function () {
         this._onStartCallbackFired = false;
         this._repeatNextStartMs = 0;
         this._startMs = this._delayMs;
+        this._isFirstUpdate = true;
         if (this._delayMs == 0 && this._target != null) {
             this.initTarget();
         }
@@ -347,12 +348,12 @@ var ATween = /** @class */ (function () {
             }
         }
         // update percent
-        if (this._fixPercent0 == false) {
+        if (this._isFirstUpdate) {
             this.elapsedMs = this._startMs; // set unified time
-            this._fixPercent0 = true;
+            this._isFirstUpdate = false;
         }
         this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
-        if (ms == 0x7FFFFFFF || this.elapsedPercent > 1) {
+        if (ms >= 0x7FFFFFFF || this.elapsedPercent > 1) {
             this.elapsedPercent = 1;
         }
         // update target
@@ -377,7 +378,7 @@ var ATween = /** @class */ (function () {
                 // reset time
                 this._repeatNextStartMs = this.elapsedMs + this._repeatDelayMs;
                 this._startMs = this._repeatNextStartMs + this._delayMs;
-                this._fixPercent0 = false;
+                this._isFirstUpdate = true;
                 // [Callback Handler]
                 if (this._onRepeatCallback != null) {
                     var cbR = this._onRepeatCallback;
@@ -515,7 +516,7 @@ var ATween = /** @class */ (function () {
      * Indicates whether the tween is keeping.
      * @returns Tween instance
      */
-    ATween.prototype.isRetain = function () {
+    ATween.prototype.isRetained = function () {
         return this._isRetained;
     };
     /**

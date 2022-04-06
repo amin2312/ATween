@@ -45,7 +45,7 @@ class ATween
     private _repeatSteps: number = 0;
     private _repeatDelayMs: number = 0;
     private _updateSteps: number = 0;
-    private _fixPercent0: boolean = false;
+    private _isFirstUpdate: boolean = true;
 
     private _startMs: number = 0;
     private _delayMs: number = 0;
@@ -273,6 +273,7 @@ class ATween
         this._onStartCallbackFired = false;
         this._repeatNextStartMs = 0;
         this._startMs = this._delayMs;
+        this._isFirstUpdate = true;
         if (this._delayMs == 0 && this._target != null)
         {
             this.initTarget();
@@ -418,13 +419,13 @@ class ATween
             }
         }
         // update percent
-        if (this._fixPercent0 == false)
+        if (this._isFirstUpdate)
         {
             this.elapsedMs = this._startMs; // set unified time
-            this._fixPercent0 = true;
+            this._isFirstUpdate = false;
         }
         this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
-        if (ms == 0x7FFFFFFF || this.elapsedPercent > 1)
+        if (ms >= 0x7FFFFFFF || this.elapsedPercent > 1)
         {
             this.elapsedPercent = 1;
         }
@@ -455,7 +456,7 @@ class ATween
                 // reset time
                 this._repeatNextStartMs = this.elapsedMs + this._repeatDelayMs;
                 this._startMs = this._repeatNextStartMs + this._delayMs;
-                this._fixPercent0 = false;
+                this._isFirstUpdate = true;
                 // [Callback Handler]
                 if (this._onRepeatCallback != null)
                 {
@@ -608,7 +609,7 @@ class ATween
      * Indicates whether the tween is keeping.
      * @returns Tween instance
      */
-    public isRetain(): boolean
+    public isRetained(): boolean
     {
         return this._isRetained;
     }

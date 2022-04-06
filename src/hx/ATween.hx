@@ -46,7 +46,7 @@ class ATween
     private var _repeatSteps:Int = 0;
     private var _repeatDelayMs:Float = 0;
     private var _updateSteps:Float = 0;
-    private var _fixPercent0: Bool = false;
+    private var _isFirstUpdate: Bool = true;
 
     private var _startMs:Float = 0;
     private var _delayMs:Float = 0;
@@ -128,7 +128,7 @@ class ATween
 	 * @param withComplete Specifies whether to call complete function.
 	 * @returns Number of killed instances
 	 */
-    public static function killTweens(targetOrAttachment:Dynamic, completed:Bool = false):Void
+    public static function killTweens(targetOrAttachment:Dynamic, completed:Bool = false):Float
     {
         var instance:Array<ATween> = _instances.concat([]);
         var num = 0;
@@ -141,6 +141,7 @@ class ATween
                 num++;
             }
         }
+        return num;
     }
     /**
 	 * Check the target or attachment is tweening.
@@ -263,6 +264,7 @@ class ATween
         _onStartCallbackFired = false;
         _repeatNextStartMs = 0;
         _startMs = _delayMs;
+        _isFirstUpdate = true;
         // 更新对象属性
         if (_delayMs == 0 && _target != null)
         {
@@ -422,13 +424,13 @@ class ATween
             }
         }
         // update percent
-        if (_fixPercent0 == false)
+        if (_isFirstUpdate)
         {
             elapsedMs = _startMs; // set unified time
-            _fixPercent0 = true;
+            _isFirstUpdate = false;
         }
         elapsedPercent = (elapsedMs - _startMs) / _durationMs;
-        if (ms == 0x7FFFFFFF || elapsedPercent > 1)
+        if (ms >= 0x7FFFFFFF || elapsedPercent > 1)
         {
             elapsedPercent = 1;
         }
@@ -460,7 +462,7 @@ class ATween
                 // reset time
                 _repeatNextStartMs = elapsedMs + _repeatDelayMs;
                 _startMs = _repeatNextStartMs + _delayMs;
-                _fixPercent0 = false;
+                _isFirstUpdate = true;
                 // [Callback Handler]
                 if (_onRepeatCallback != null)
                 {
@@ -501,11 +503,11 @@ class ATween
 	 * @param withComplete Specifies whether to call complete function.
 	 * @returns Tween instance
 	 */
-    public function cancel(complete:Bool = false)
+    public function cancel(complete:Bool = false):Void
     {
         if (_isCompleted == true || _isRetained == true)
         {
-            return this;
+            return;
         }
         this._repeatRefs = 0;
         if (complete == true)
@@ -524,7 +526,6 @@ class ATween
             cb();
             #end
         }
-        return this;
     }
     /**
 	 * The destination value that the target wants to achieves.
@@ -633,7 +634,7 @@ class ATween
      * Indicates whether the tween is keeping.
 	 * @returns Tween instance
 	 */
-    inline public function isRetain():Bool
+    inline public function isRetained():Bool
     {
         return _isRetained;
     }

@@ -19,7 +19,7 @@ function Main()
         eCanvas.setAttribute('height', (item.clientHeight - eName.clientHeight) + '');
         var two = new Two({ width: eCanvas.width, height: eCanvas.height, domElement: eCanvas, autostart: true });
         // draw edges
-        var shpae:Two.Shape;
+        var shpae: Two.Shape;
         shpae = two.makeLine(0, GAP, two.width, GAP);
         shpae.stroke = 'rgb(210, 210, 210)';
         shpae.linewidth = 1;
@@ -52,6 +52,10 @@ function onEasingUpdate(this: ATween, p: number, times: number)
 function onEasingComplete(this: ATween)
 {
     var two: Two = this.getData();
-    two.pause();
+    // render last time for completion
+    setTimeout(function ()
+    {
+        two.pause();
+    }, 1);
 }
 Main();

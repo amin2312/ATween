@@ -24,7 +24,7 @@ var ATween = $hx_exports["ATween"] = function(target) {
 	this._durationMs = 1;
 	this._delayMs = 0;
 	this._startMs = 0;
-	this._fixPercent0 = false;
+	this._isFirstUpdate = true;
 	this._updateSteps = 0;
 	this._repeatDelayMs = 0;
 	this._repeatSteps = 0;
@@ -92,6 +92,7 @@ ATween.killTweens = function(targetOrAttachment,completed) {
 			++num;
 		}
 	}
+	return num;
 };
 ATween.isTweening = function(targetOrAttachment) {
 	var _g1 = 0;
@@ -162,6 +163,7 @@ ATween.prototype = {
 		this._onStartCallbackFired = false;
 		this._repeatNextStartMs = 0;
 		this._startMs = this._delayMs;
+		this._isFirstUpdate = true;
 		if(this._delayMs == 0 && this._target != null) {
 			this.initTarget();
 		}
@@ -269,12 +271,12 @@ ATween.prototype = {
 				cbS.call(this);
 			}
 		}
-		if(this._fixPercent0 == false) {
+		if(this._isFirstUpdate) {
 			this.elapsedMs = this._startMs;
-			this._fixPercent0 = true;
+			this._isFirstUpdate = false;
 		}
 		this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
-		if(this.elapsedPercent > 1) {
+		if(ms >= 2147483647 || this.elapsedPercent > 1) {
 			this.elapsedPercent = 1;
 		}
 		this.updateTarget(this.elapsedPercent);
@@ -299,7 +301,7 @@ ATween.prototype = {
 				}
 				this._repeatNextStartMs = this.elapsedMs + this._repeatDelayMs;
 				this._startMs = this._repeatNextStartMs + this._delayMs;
-				this._fixPercent0 = false;
+				this._isFirstUpdate = true;
 				if(this._onRepeatCallback != null) {
 					var cbR = this._onRepeatCallback;
 					var rzl = cbR.call(this,this._repeatSteps);
@@ -325,7 +327,7 @@ ATween.prototype = {
 			complete = false;
 		}
 		if(this._isCompleted == true || this._isRetained == true) {
-			return this;
+			return;
 		}
 		this._repeatRefs = 0;
 		if(complete == true) {
@@ -337,7 +339,6 @@ ATween.prototype = {
 			var cb = this._onCancelCallback;
 			cb.call(this);
 		}
-		return this;
 	}
 	,to: function(endValus) {
 		this._dstVals = endValus;
@@ -393,7 +394,7 @@ ATween.prototype = {
 		this._isRetained = false;
 		return this;
 	}
-	,isRetain: function() {
+	,isRetained: function() {
 		return this._isRetained;
 	}
 	,setPause: function(v) {

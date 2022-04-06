@@ -4,6 +4,7 @@
  * 3. MIT License
  *
  * ATween - is a easy, fast and tiny tween libary.
+ * It can run in javascript environment or other platforms (via haxe).
  */
 class ATween
 {

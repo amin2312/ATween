@@ -16,6 +16,7 @@ var ATween = $hx_exports["ATween"] = function(target) {
 	this._isStarted = false;
 	this._onStartCallback = null;
 	this._easing = null;
+	this._isRetained = false;
 	this._pause = false;
 	this._isCompleted = false;
 	this._yoyo = false;

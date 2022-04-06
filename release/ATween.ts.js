@@ -28,6 +28,7 @@ var ATween = /** @class */ (function () {
         this._repeatSteps = 0;
         this._repeatDelayMs = 0;
         this._updateSteps = 0;
+        this._fixPercent0 = false;
         this._startMs = 0;
         this._delayMs = 0;
         this._durationMs = 1;
@@ -240,6 +241,8 @@ var ATween = /** @class */ (function () {
         if (this._initedTarget) {
             return;
         }
+        this._srcVals = {};
+        this._revVals = {};
         for (var property in this._dstVals) {
             var curVal;
             if (this._target.get_tween_prop != null) {
@@ -254,11 +257,9 @@ var ATween = /** @class */ (function () {
             }
             // !! Convert Empty value(null, false, '') to 0
             curVal *= 1.0;
-            // create source values
-            this._srcVals = {};
+            // set source value
             this._srcVals[property] = curVal;
-            // create reverse values set
-            this._revVals = {};
+            // set reverse value
             this._revVals[property] = curVal;
         }
         this._initedTarget = true;
@@ -345,9 +346,13 @@ var ATween = /** @class */ (function () {
                 cbS.call(this);
             }
         }
-        // update values
+        // update percent
+        if (this._fixPercent0 == false) {
+            this.elapsedMs = this._startMs; // set unified time
+            this._fixPercent0 = true;
+        }
         this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
-        if (this.elapsedPercent > 1) {
+        if (ms == 0x7FFFFFFF || this.elapsedPercent > 1) {
             this.elapsedPercent = 1;
         }
         // update target
@@ -372,6 +377,7 @@ var ATween = /** @class */ (function () {
                 // reset time
                 this._repeatNextStartMs = this.elapsedMs + this._repeatDelayMs;
                 this._startMs = this._repeatNextStartMs + this._delayMs;
+                this._fixPercent0 = false;
                 // [Callback Handler]
                 if (this._onRepeatCallback != null) {
                     var cbR = this._onRepeatCallback;

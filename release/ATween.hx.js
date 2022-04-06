@@ -16,7 +16,6 @@ var ATween = $hx_exports["ATween"] = function(target) {
 	this._isStarted = false;
 	this._onStartCallback = null;
 	this._easing = null;
-	this._retain = false;
 	this._pause = false;
 	this._isCompleted = false;
 	this._yoyo = false;
@@ -24,6 +23,7 @@ var ATween = $hx_exports["ATween"] = function(target) {
 	this._durationMs = 1;
 	this._delayMs = 0;
 	this._startMs = 0;
+	this._fixPercent0 = false;
 	this._updateSteps = 0;
 	this._repeatDelayMs = 0;
 	this._repeatSteps = 0;
@@ -167,6 +167,11 @@ ATween.prototype = {
 		return this;
 	}
 	,initTarget: function() {
+		if(this._initedTarget) {
+			return;
+		}
+		this._srcVals = { };
+		this._revVals = { };
 		var fields = Reflect.fields(this._dstVals);
 		var _g = 0;
 		while(_g < fields.length) {
@@ -183,13 +188,7 @@ ATween.prototype = {
 				throw new js__$Boot_HaxeError("Unknown dest value:" + dstVal);
 			}
 			curVal *= 1.0;
-			if(this._srcVals == null) {
-				this._srcVals = { };
-			}
 			this._srcVals[property] = curVal;
-			if(this._revVals == null) {
-				this._revVals = { };
-			}
 			this._revVals[property] = curVal;
 		}
 		this._initedTarget = true;
@@ -234,7 +233,7 @@ ATween.prototype = {
 				if(fnC != null) {
 					syncVal = fnC(newVal,startVal,endVal,ePercent,property);
 				} else {
-					syncVal = Math.floor(newVal) + "px";
+					syncVal = Math.floor(newVal);
 				}
 				var e = this._attachment;
 				e.style.setProperty(property,syncVal);
@@ -269,6 +268,10 @@ ATween.prototype = {
 				cbS.call(this);
 			}
 		}
+		if(this._fixPercent0 == false) {
+			this.elapsedMs = this._startMs;
+			this._fixPercent0 = true;
+		}
 		this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
 		if(this.elapsedPercent > 1) {
 			this.elapsedPercent = 1;
@@ -295,6 +298,7 @@ ATween.prototype = {
 				}
 				this._repeatNextStartMs = this.elapsedMs + this._repeatDelayMs;
 				this._startMs = this._repeatNextStartMs + this._delayMs;
+				this._fixPercent0 = false;
 				if(this._onRepeatCallback != null) {
 					var cbR = this._onRepeatCallback;
 					var rzl = cbR.call(this,this._repeatSteps);
@@ -319,7 +323,7 @@ ATween.prototype = {
 		if(complete == null) {
 			complete = false;
 		}
-		if(this._isCompleted == true || this._retain == true) {
+		if(this._isCompleted == true || this._isRetained == true) {
 			return this;
 		}
 		this._repeatRefs = 0;
@@ -334,8 +338,8 @@ ATween.prototype = {
 		}
 		return this;
 	}
-	,to: function(properties) {
-		this._dstVals = properties;
+	,to: function(endValus) {
+		this._dstVals = endValus;
 		return this;
 	}
 	,attach: function(obj,convert) {
@@ -371,7 +375,7 @@ ATween.prototype = {
 		var cb = this._onRepeatCallback;
 		var rzl = cb.call(this, 0);
 		if(rzl == false) {
-			this._retain = false;
+			this._isRetained = false;
 			this.cancel();
 		}
 		return this;
@@ -381,15 +385,15 @@ ATween.prototype = {
 		return this;
 	}
 	,retain: function() {
-		this._retain = true;
+		this._isRetained = true;
 		return this;
 	}
 	,release: function() {
-		this._retain = false;
+		this._isRetained = false;
 		return this;
 	}
 	,isRetain: function() {
-		return this._retain;
+		return this._isRetained;
 	}
 	,setPause: function(v) {
 		this._pause = v;
@@ -446,6 +450,194 @@ ATween.prototype = {
 		return this.to({ x : a, y : b});
 	}
 };
+var ATweenConvertor = $hx_exports["ATweenConvertor"] = function() { };
+ATweenConvertor.css_unit = function(curValue,startValue,endValue,percent,property) {
+	return curValue + "px";
+};
+ATweenConvertor.css_gradient = function(curValue,startValue,endValue,percent,property) {
+	var R0 = (startValue & 16711680) >> 16;
+	var G0 = (startValue & 65280) >> 8;
+	var B0 = startValue & 255;
+	var R1 = (endValue & 16711680) >> 16;
+	var G1 = (endValue & 65280) >> 8;
+	var B1 = endValue & 255;
+	var R = Math.floor(R1 * percent + (1 - percent) * R0);
+	var G = Math.floor(G1 * percent + (1 - percent) * G0);
+	var B = Math.floor(B1 * percent + (1 - percent) * B0);
+	var color = R << 16 | G << 8 | B;
+	var s = StringTools.hex(color);
+	var _g = s.length;
+	while(_g < 6) {
+		var i = _g++;
+		s = "0" + s;
+	}
+	return "#" + s;
+};
+var ATweenEasing = $hx_exports["ATweenEasing"] = function() { };
+ATweenEasing.Linear = function(k) {
+	return k;
+};
+ATweenEasing.QuadraticIn = function(k) {
+	return k * k;
+};
+ATweenEasing.QuadraticOut = function(k) {
+	return k * (2 - k);
+};
+ATweenEasing.QuadraticInOut = function(k) {
+	if((k *= 2) < 1) {
+		return 0.5 * k * k;
+	}
+	return -0.5 * (--k * (k - 2) - 1);
+};
+ATweenEasing.CubicIn = function(k) {
+	return k * k * k;
+};
+ATweenEasing.CubicOut = function(k) {
+	return --k * k * k + 1;
+};
+ATweenEasing.CubicInOut = function(k) {
+	if((k *= 2) < 1) {
+		return 0.5 * k * k * k;
+	}
+	return 0.5 * ((k -= 2) * k * k + 2);
+};
+ATweenEasing.QuarticIn = function(k) {
+	return k * k * k * k;
+};
+ATweenEasing.QuarticOut = function(k) {
+	return 1 - --k * k * k * k;
+};
+ATweenEasing.QuarticInOut = function(k) {
+	if((k *= 2) < 1) {
+		return 0.5 * k * k * k * k;
+	}
+	return -0.5 * ((k -= 2) * k * k * k - 2);
+};
+ATweenEasing.QuinticIn = function(k) {
+	return k * k * k * k * k;
+};
+ATweenEasing.QuinticOut = function(k) {
+	return --k * k * k * k * k + 1;
+};
+ATweenEasing.QuinticInOut = function(k) {
+	if((k *= 2) < 1) {
+		return 0.5 * k * k * k * k * k;
+	}
+	return 0.5 * ((k -= 2) * k * k * k * k + 2);
+};
+ATweenEasing.SinusoidalIn = function(k) {
+	return 1 - Math.cos(k * Math.PI / 2);
+};
+ATweenEasing.SinusoidalOut = function(k) {
+	return Math.sin(k * Math.PI / 2);
+};
+ATweenEasing.SinusoidalInOut = function(k) {
+	return 0.5 * (1 - Math.cos(Math.PI * k));
+};
+ATweenEasing.ExponentialIn = function(k) {
+	if(k == 0) {
+		return 0;
+	} else {
+		return Math.pow(1024,k - 1);
+	}
+};
+ATweenEasing.ExponentialOut = function(k) {
+	if(k == 1) {
+		return 1;
+	} else {
+		return 1 - Math.pow(2,-10 * k);
+	}
+};
+ATweenEasing.ExponentialInOut = function(k) {
+	if(k == 0) {
+		return 0;
+	}
+	if(k == 1) {
+		return 1;
+	}
+	if((k *= 2) < 1) {
+		return 0.5 * Math.pow(1024,k - 1);
+	}
+	return 0.5 * (-Math.pow(2,-10 * (k - 1)) + 2);
+};
+ATweenEasing.CircularIn = function(k) {
+	return 1 - Math.sqrt(1 - k * k);
+};
+ATweenEasing.CircularOut = function(k) {
+	return Math.sqrt(1 - --k * k);
+};
+ATweenEasing.CircularInOut = function(k) {
+	if((k *= 2) < 1) {
+		return -0.5 * (Math.sqrt(1 - k * k) - 1);
+	}
+	return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
+};
+ATweenEasing.ElasticIn = function(k) {
+	if(k == 0) {
+		return 0;
+	}
+	if(k == 1) {
+		return 1;
+	}
+	return -Math.pow(2,10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+};
+ATweenEasing.ElasticOut = function(k) {
+	if(k == 0) {
+		return 0;
+	}
+	if(k == 1) {
+		return 1;
+	}
+	return Math.pow(2,-10 * k) * Math.sin((k - 0.1) * 5 * Math.PI) + 1;
+};
+ATweenEasing.ElasticInOut = function(k) {
+	if(k == 0) {
+		return 0;
+	}
+	if(k == 1) {
+		return 1;
+	}
+	k *= 2;
+	if(k < 1) {
+		return -0.5 * Math.pow(2,10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+	}
+	return 0.5 * Math.pow(2,-10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
+};
+ATweenEasing.BackIn = function(k) {
+	var s = 1.70158;
+	return k * k * ((s + 1) * k - s);
+};
+ATweenEasing.BackOut = function(k) {
+	var s = 1.70158;
+	return --k * k * ((s + 1) * k + s) + 1;
+};
+ATweenEasing.BackInOut = function(k) {
+	var s = 2.5949095;
+	if((k *= 2) < 1) {
+		return 0.5 * (k * k * ((s + 1) * k - s));
+	}
+	return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
+};
+ATweenEasing.BounceIn = function(k) {
+	return 1 - ATweenEasing.BounceOut(1 - k);
+};
+ATweenEasing.BounceOut = function(k) {
+	if(k < 0.36363636363636365) {
+		return 7.5625 * k * k;
+	} else if(k < 0.72727272727272729) {
+		return 7.5625 * (k -= 0.54545454545454541) * k + 0.75;
+	} else if(k < 0.90909090909090906) {
+		return 7.5625 * (k -= 0.81818181818181823) * k + 0.9375;
+	} else {
+		return 7.5625 * (k -= 0.95454545454545459) * k + 0.984375;
+	}
+};
+ATweenEasing.BounceInOut = function(k) {
+	if(k < 0.5) {
+		return ATweenEasing.BounceIn(k * 2) * 0.5;
+	}
+	return ATweenEasing.BounceOut(k * 2 - 1) * 0.5 + 0.5;
+};
 var Reflect = function() { };
 Reflect.fields = function(o) {
 	var a = [];
@@ -458,6 +650,22 @@ Reflect.fields = function(o) {
 		}
 	}
 	return a;
+};
+var StringTools = function() { };
+StringTools.hex = function(n,digits) {
+	var s = "";
+	var hexChars = "0123456789ABCDEF";
+	while(true) {
+		s = hexChars.charAt(n & 15) + s;
+		n >>>= 4;
+		if(!(n > 0)) {
+			break;
+		}
+	}
+	if(digits != null) {
+		while(s.length < digits) s = "0" + s;
+	}
+	return s;
 };
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);

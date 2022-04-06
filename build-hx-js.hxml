@@ -1,2 +1,5 @@
---class-path src/hx
+-cp src/hx
+ATween
+ATweenEasing
+ATweenConvertor
 -js release/ATween.hx.js

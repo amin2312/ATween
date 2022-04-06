@@ -46,6 +46,7 @@ class ATween
     private var _repeatSteps:Int = 0;
     private var _repeatDelayMs:Float = 0;
     private var _updateSteps:Float = 0;
+    private var _fixPercent0: Bool = false;
 
     private var _startMs:Float = 0;
     private var _delayMs:Float = 0;
@@ -278,6 +279,8 @@ class ATween
         {
             return;
         }
+        _srcVals = {};
+        _revVals = {};
         var fields = Reflect.fields(_dstVals);
         for (property in fields)
         {
@@ -297,12 +300,10 @@ class ATween
             }
             // !! Convert Empty value(null, false, '') to 0
             curVal *= 1.0;
-            // create source values
-            this._srcVals = {};
-            this._srcVals[untyped property] = curVal;
-            // create reverse values set
-            this._revVals = {};
-            this._revVals[untyped property] = curVal;
+            // set source value
+            _srcVals[untyped property] = curVal;
+            // set reverse value
+            _revVals[untyped property] = curVal;
         }
         _initedTarget = true;
     }
@@ -420,9 +421,14 @@ class ATween
                 #end
             }
         }
-        // update values
+        // update percent
+        if (_fixPercent0 == false)
+        {
+            elapsedMs = _startMs; // set unified time
+            _fixPercent0 = true;
+        }
         elapsedPercent = (elapsedMs - _startMs) / _durationMs;
-        if (elapsedPercent > 1)
+        if (ms == 0x7FFFFFFF || elapsedPercent > 1)
         {
             elapsedPercent = 1;
         }
@@ -454,6 +460,7 @@ class ATween
                 // reset time
                 _repeatNextStartMs = elapsedMs + _repeatDelayMs;
                 _startMs = _repeatNextStartMs + _delayMs;
+                _fixPercent0 = false;
                 // [Callback Handler]
                 if (_onRepeatCallback != null)
                 {

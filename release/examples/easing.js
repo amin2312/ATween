@@ -1,4 +1,6 @@
 "use strict";
+/// <reference path="d/ATween.d.ts" />
+/// <reference path="d/Two.d.ts" />
 var GAP = 50;
 function Main() {
     var root = document.getElementById('easing');

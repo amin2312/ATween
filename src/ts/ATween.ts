@@ -45,6 +45,7 @@ class ATween
     private _repeatSteps: number = 0;
     private _repeatDelayMs: number = 0;
     private _updateSteps: number = 0;
+    private _fixPercent0: boolean = false;
 
     private _startMs: number = 0;
     private _delayMs: number = 0;
@@ -287,6 +288,8 @@ class ATween
         {
             return;
         }
+        this._srcVals = {};
+        this._revVals = {};
         for (var property in this._dstVals)
         {
             var curVal: any;
@@ -305,11 +308,9 @@ class ATween
             }
             // !! Convert Empty value(null, false, '') to 0
             curVal *= 1.0;
-            // create source values
-            this._srcVals = {};
+            // set source value
             this._srcVals[property] = curVal;
-            // create reverse values set
-            this._revVals = {};
+            // set reverse value
             this._revVals[property] = curVal;
         }
         this._initedTarget = true;
@@ -416,9 +417,14 @@ class ATween
                 cbS.call(this);
             }
         }
-        // update values
+        // update percent
+        if (this._fixPercent0 == false)
+        {
+            this.elapsedMs = this._startMs; // set unified time
+            this._fixPercent0 = true;
+        }
         this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
-        if (this.elapsedPercent > 1)
+        if (ms == 0x7FFFFFFF || this.elapsedPercent > 1)
         {
             this.elapsedPercent = 1;
         }
@@ -449,6 +455,7 @@ class ATween
                 // reset time
                 this._repeatNextStartMs = this.elapsedMs + this._repeatDelayMs;
                 this._startMs = this._repeatNextStartMs + this._delayMs;
+                this._fixPercent0 = false;
                 // [Callback Handler]
                 if (this._onRepeatCallback != null)
                 {

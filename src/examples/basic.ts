@@ -1,3 +1,4 @@
+/// <reference path="d/ATween.d.ts" />
 /**
  * Test Units
  */

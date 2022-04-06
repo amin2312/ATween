@@ -6,7 +6,7 @@
  * Tween Easing.
  * 
  * IF you don't need custom easing feature,
- * YOU can compile the project without this file.
+ * you can compile the project without this file.
  */
 class ATweenEasing
 {

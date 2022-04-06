@@ -4,6 +4,7 @@
  * 3. MIT License
  *
  * ATween - is a easy, fast and tiny tween libary.
+ * It can run in javascript environment or other platforms (via haxe, as lua).
  */
 @:expose
 class ATween
@@ -25,9 +26,9 @@ class ATween
 	**/
     public var elapsedMs:Float = 0;
     /**
-	 * Elapsed percent of tween(unit: millisecond).
+	 * Elapsed percentage of tween(unit: millisecond).
 	**/
-    public var elapsedPercent:Float = 0;
+    public var elapsedPercentage:Float = 0;
     /**
 	 * Params of tween.
 	 */
@@ -208,9 +209,8 @@ class ATween
         return t;
     }
     /**
-	 * Create a once timer.
-	 * It will auto start,
-     * YOU don't need to call 'start()' function.
+     * Create a once timer.
+	 * It will AUTO start, you don't need to call "start()" function.
 	 * @param intervalMs interval millisecond
 	 * @param onCompleteCallback The callback function when completion.
 	 * @param onCompleteParams The callback parameters when completion.
@@ -227,11 +227,10 @@ class ATween
     }
     /**
 	 * Create a timer.
-	 * It will auto start,
-     * YOU don't need to call 'start()' function.
+	 * It will AUTO start, you don't need to call "start()" function.
 	 * @param intervalMs interval millisecond
-	 * @param times Repeat Times(-1 is infinity)
-	 * @param onRepeatCallback  IF return false, then will cancel this timer.
+     * @param times the repeat times(-1 is infinity)
+     * @param onRepeatCallback  if return FASLE, then will cancel this timer.
 	 * @param onCompleteCallback The callback function when completion.
 	 * @param onCompleteParams The callback parameters when completion.
 	 * @returns Tween instance
@@ -429,15 +428,15 @@ class ATween
             elapsedMs = _startMs; // set unified time
             _isFirstUpdate = false;
         }
-        elapsedPercent = (elapsedMs - _startMs) / _durationMs;
-        if (ms >= 0x7FFFFFFF || elapsedPercent > 1)
+        elapsedPercentage = (elapsedMs - _startMs) / _durationMs;
+        if (ms >= 0x7FFFFFFF || elapsedPercentage > 1)
         {
-            elapsedPercent = 1;
+            elapsedPercentage = 1;
         }
         // update target
-        updateTarget(elapsedPercent);
+        updateTarget(elapsedPercentage);
         // end processing
-        if (elapsedPercent == 1)
+        if (elapsedPercentage == 1)
         {
             if (_repeatRefs != 0)
             {
@@ -499,7 +498,7 @@ class ATween
         return true;
     }
     /**
-	 * Cancel.
+     * Cancel this tween.
 	 * @param withComplete Specifies whether to call complete function.
 	 * @returns Tween instance
 	 */
@@ -528,20 +527,20 @@ class ATween
         }
     }
     /**
-	 * The destination value that the target wants to achieves.
-	 * @param endValus destination values.
+	 * The destination values that the target wants to achieves.
+	 * @param endValues destination values.
 	 * @returns Tween instance
 	 */
-    public function to(endValus:Dynamic):ATween
+    public function to(endValues:Dynamic):ATween
     {
-        _dstVals = endValus;
+        _dstVals = endValues;
         return this;
     }
 	#if js
     /**
-     * Attach to HTMLElement element(The new tween value will auto sync to it).
+     * Attach to HTMLElement element (The tween value will auto sync to this element).
      * @param obj HTMLElement or element id
-     * @param convert the tween value convertor.
+     * @param convert the tween value convertor(You can use it to convert the current value to its final form, e.g. convert <int> to <rgb>)
      * @returns Tween instance
      */
 	public function attach(obj:Dynamic, convert:Float->Float->Float->Float->String->Dynamic = null):ATween
@@ -570,7 +569,7 @@ class ATween
     }
     /**
 	 * Set repeat execution.
-	 * @param times the repeat time
+	 * @param times the repeat times(-1 is infinity)
 	 * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
 	 * @param delayMs delay trigger time
 	 * @returns Tween instance
@@ -584,7 +583,7 @@ class ATween
         return this;
     }
     /**
-	 * Immediate call the repeat function.
+     * Calls the "onRepeat" function immediately(repeat times is 0).
      * IF you need to init the environment, then it's a good choice.
 	 * @returns Tween instance
 	 */
@@ -613,7 +612,7 @@ class ATween
         return this;
     }
     /**
-	 * Keep this tween, killAll has no effect on it.
+     * Keep this tween, "killAll" has no effect on it.
 	 * @returns Tween instance
 	 */
     inline public function retain():ATween
@@ -622,7 +621,7 @@ class ATween
         return this;
     }
     /**
-	 * Release the retained tween.
+	 * Release this retained tween.
 	 * @returns Tween instance
 	 */
     inline public function release():ATween
@@ -723,6 +722,7 @@ class ATween
     }
     /**
      * Set the callback function when repeating.
+     * if return FASLE, then will cancel this timer.
      * @returns Tween instance
      */
     public function onRepeat(callback:Int -> Bool):ATween

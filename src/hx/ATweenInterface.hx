@@ -7,7 +7,7 @@ package ;
  * ATween Property Interface.
  *
  * IF the target has implement this interface,
- * THEN the tween will use its functions first to update the target.
+ * then the tween will use its interface functions first to update the target.
  */
 interface ATweenInterface
 {

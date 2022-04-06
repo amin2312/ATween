@@ -1,0 +1,2 @@
+// use typedoc to gen documents
+npx typedoc --out release/documents/ts --entryPointStrategy expand ./src/ts --cleanOutputDir false --excludePrivate

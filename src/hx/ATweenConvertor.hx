@@ -7,7 +7,7 @@ package ;
  * ATween helper library - Convertor.
  *
  * IF you don't need custom conversion feature,
- * YOU can compile the project without this file.
+ * you can compile the project without this file.
  */
 @:expose
 class ATweenConvertor

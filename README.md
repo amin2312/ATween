@@ -7,8 +7,8 @@ It use Method Chaining, the code as below:
 ATween.newTween(target, 1000).to({x: 100}).repeat(2, false).start();
 ```
 It also provides the demo and documentation
-* [Online Examples](http://www.runoob.com)
-* [Online Documentation](http://www.runoob.com)
+* [Online Examples](https://amin2312.github.io/ATween/release/examples/basic.html)
+* [Online Documentation](https://amin2312.github.io/ATween/release/documents/ts/index.html)
 
 At the end, This library has running in commercial systems for over 5 years, it is stable, you can use with confidence.  
 ***

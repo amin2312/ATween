@@ -3,7 +3,7 @@
  * 2. Version 1.0.0
  * 3. MIT License
  *
- * ATween - is a easy, fast and tiny tween libary.
+ * ATween - is a easy, fast and tiny tween library.
  * It can run in javascript environment or other platforms (via haxe, as lua).
  */
 @:expose

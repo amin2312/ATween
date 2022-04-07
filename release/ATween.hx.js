@@ -34,7 +34,7 @@ var ATween = $hx_exports["ATween"] = function(target) {
 	this._convertor = null;
 	this._attachment = null;
 	this._initedTarget = false;
-	this.elapsedPercent = 0;
+	this.elapsedPercentage = 0;
 	this.elapsedMs = 0;
 	this._target = target;
 };
@@ -275,12 +275,12 @@ ATween.prototype = {
 			this.elapsedMs = this._startMs;
 			this._isFirstUpdate = false;
 		}
-		this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
-		if(ms >= 2147483647 || this.elapsedPercent > 1) {
-			this.elapsedPercent = 1;
+		this.elapsedPercentage = (this.elapsedMs - this._startMs) / this._durationMs;
+		if(ms >= 2147483647 || this.elapsedPercentage > 1) {
+			this.elapsedPercentage = 1;
 		}
-		this.updateTarget(this.elapsedPercent);
-		if(this.elapsedPercent == 1) {
+		this.updateTarget(this.elapsedPercentage);
+		if(this.elapsedPercentage == 1) {
 			if(this._repeatRefs != 0) {
 				this._repeatSteps++;
 				this._repeatRefs--;
@@ -340,8 +340,8 @@ ATween.prototype = {
 			cb.call(this);
 		}
 	}
-	,to: function(endValus) {
-		this._dstVals = endValus;
+	,to: function(endValues) {
+		this._dstVals = endValues;
 		return this;
 	}
 	,attach: function(obj,convert) {

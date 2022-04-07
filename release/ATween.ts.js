@@ -5,6 +5,7 @@
  * 3. MIT License
  *
  * ATween - is a easy, fast and tiny tween library.
+ * It can run in javascript environment or other platforms (via haxe, as lua).
  */
 var ATween = /** @class */ (function () {
     /**
@@ -16,9 +17,9 @@ var ATween = /** @class */ (function () {
          **/
         this.elapsedMs = 0;
         /**
-         * Elapsed percent of tween(unit: millisecond).
+         * Elapsed percentage of tween(unit: millisecond).
          **/
-        this.elapsedPercent = 0;
+        this.elapsedPercentage = 0;
         this._initedTarget = false;
         this._attachment = null;
         this._convertor = null;
@@ -176,7 +177,7 @@ var ATween = /** @class */ (function () {
     /**
      * Create a once timer.
      * @remarks
-     * It will auto start, you don't need to call 'start()' function.
+     * It will AUTO start, you don't need to call "start()" function.
      * @param intervalMs interval millisecond
      * @param onCompleteCallback The callback function when completion.
      * @param onCompleteParams The callback parameters when completion.
@@ -194,10 +195,10 @@ var ATween = /** @class */ (function () {
     /**
      * Create a timer.
      * @remarks
-     * It will auto start, you don't need to call 'start()' function.
+     * It will AUTO start, you don't need to call "start()" function.
      * @param intervalMs interval millisecond
-     * @param times Repeat Times(-1 is infinity)
-     * @param onRepeatCallback  IF return false, then will cancel this timer.
+     * @param times the repeat times(-1 is infinity)
+     * @param onRepeatCallback  if return FASLE, then will cancel this timer.
      * @param onCompleteCallback The callback function when completion.
      * @param onCompleteParams The callback parameters when completion.
      * @returns Tween instance
@@ -352,14 +353,14 @@ var ATween = /** @class */ (function () {
             this.elapsedMs = this._startMs; // set unified time
             this._isFirstUpdate = false;
         }
-        this.elapsedPercent = (this.elapsedMs - this._startMs) / this._durationMs;
-        if (ms >= 0x7FFFFFFF || this.elapsedPercent > 1) {
-            this.elapsedPercent = 1;
+        this.elapsedPercentage = (this.elapsedMs - this._startMs) / this._durationMs;
+        if (ms >= 0x7FFFFFFF || this.elapsedPercentage > 1) {
+            this.elapsedPercentage = 1;
         }
         // update target
-        this.updateTarget(this.elapsedPercent);
+        this.updateTarget(this.elapsedPercentage);
         // end processing
-        if (this.elapsedPercent == 1) {
+        if (this.elapsedPercentage == 1) {
             if (this._repeatRefs != 0) {
                 this._repeatSteps++;
                 this._repeatRefs--;
@@ -402,7 +403,7 @@ var ATween = /** @class */ (function () {
         return true;
     };
     /**
-     * Cancel.
+     * Cancel this tween.
      * @param withComplete Specifies whether to call complete function.
      * @returns Tween instance
      */
@@ -424,18 +425,18 @@ var ATween = /** @class */ (function () {
         }
     };
     /**
-     * The destination value that the target wants to achieves.
-     * @param endValus destination values.
+     * The destination values that the target wants to achieves.
+     * @param endValues destination values.
      * @returns Tween instance
      */
-    ATween.prototype.to = function (endValus) {
-        this._dstVals = endValus;
+    ATween.prototype.to = function (endValues) {
+        this._dstVals = endValues;
         return this;
     };
     /**
-     * Attach to HTMLElement element(The new tween value will auto sync to it).
+     * Attach to HTMLElement element (The tween value will auto sync to this element).
      * @param obj HTMLElement or element id
-     * @param convert the tween value convertor.
+     * @param convert the tween value convertor(You can use it to convert the current value to its final form, e.g. convert "int" to "rgb")
      * @returns Tween instance
      */
     ATween.prototype.attach = function (obj, convert) {
@@ -460,7 +461,7 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set repeat execution.
-     * @param times the repeat time
+     * @param times the repeat times(-1 is infinity)
      * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
      * @param delayMs delay trigger time
      * @returns Tween instance
@@ -475,7 +476,7 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Immediate call the repeat function.
+     * Calls the "onRepeat" function immediately(repeat times is 0).
      * @remark
      * IF you need to init the environment, then it's a good choice.
      * @returns Tween instance
@@ -497,7 +498,7 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Keep this tween, killAll has no effect on it.
+     * Keep this tween, "killAll" has no effect on it.
      * @returns Tween instance
      */
     ATween.prototype.retain = function () {
@@ -505,7 +506,7 @@ var ATween = /** @class */ (function () {
         return this;
     };
     /**
-     * Release the retained tween.
+     * Release this retained tween.
      * @returns Tween instance
      */
     ATween.prototype.release = function () {
@@ -594,6 +595,8 @@ var ATween = /** @class */ (function () {
     };
     /**
      * Set the callback function when repeating.
+     * @remarks
+     * if return FASLE, then will cancel this timer.
      * @returns Tween instance
      */
     ATween.prototype.onRepeat = function (callback) {
@@ -646,7 +649,7 @@ var ATween = /** @class */ (function () {
  * Tween Convertor.
  *
  * IF you don't need custom conversion feature,
- * YOU can compile the project without this file.
+ * you can compile the project without this file.
  */
 var ATweenConvertor = /** @class */ (function () {
     function ATweenConvertor() {
@@ -687,7 +690,7 @@ var ATweenConvertor = /** @class */ (function () {
  * Tween Easing.
  *
  * IF you don't need custom easing feature,
- * YOU can compile the project without this file.
+ * you can compile the project without this file.
  */
 var ATweenEasing = /** @class */ (function () {
     function ATweenEasing() {

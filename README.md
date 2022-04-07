@@ -11,6 +11,8 @@ It also provides the demo and documentation
 * [Online Documentation](https://amin2312.github.io/ATween/release/documents/ts/index.html)
 
 At the end, This library has running in commercial systems for over 5 years, it is stable, you can use with confidence.  
+
+***⭐ If you like this project, please give a star ⭐***
 ***
 + **español**  
 "ATween" es una biblioteca fácil, rápida y pequeña.

@@ -3,8 +3,8 @@
  * 2. Version 1.0.0
  * 3. MIT License
  *
- * ATween - is a easy, fast and tiny tween library.
- * It can run in javascript environment or other platforms (via haxe, as lua).
+ * ATween is a easy, fast and tiny tween library.
+ * It can run in javascript environment or other platforms (such as lua via haxe).
  */
 @:expose
 class ATween
@@ -26,7 +26,7 @@ class ATween
 	**/
     public var elapsedMs:Float = 0;
     /**
-	 * Elapsed percentage of tween(unit: millisecond).
+     * Elapsed percentage of tween.
 	**/
     public var elapsedPercentage:Float = 0;
     /**
@@ -540,7 +540,7 @@ class ATween
     /**
      * Attach to HTMLElement element (The tween value will auto sync to this element).
      * @param obj HTMLElement or element id
-     * @param convert the tween value convertor(You can use it to convert the current value to its final form, e.g. convert <int> to <rgb>)
+     * @param convert You can use it to convert the current value to its final form, e.g. convert "int" to "rgb"
      * @returns Tween instance
      */
 	public function attach(obj:Dynamic, convert:Float->Float->Float->Float->String->Dynamic = null):ATween

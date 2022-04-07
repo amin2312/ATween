@@ -4,8 +4,8 @@
  * 2. Version 1.0.0
  * 3. MIT License
  *
- * ATween - is a easy, fast and tiny tween library.
- * It can run in javascript environment or other platforms (via haxe, as lua).
+ * ATween is a easy, fast and tiny tween library.
+ * It can run in javascript environment or other platforms (such as lua via haxe).
  */
 var ATween = /** @class */ (function () {
     /**
@@ -17,7 +17,7 @@ var ATween = /** @class */ (function () {
          **/
         this.elapsedMs = 0;
         /**
-         * Elapsed percentage of tween(unit: millisecond).
+         * Elapsed percentage of tween.
          **/
         this.elapsedPercentage = 0;
         this._initedTarget = false;
@@ -436,7 +436,7 @@ var ATween = /** @class */ (function () {
     /**
      * Attach to HTMLElement element (The tween value will auto sync to this element).
      * @param obj HTMLElement or element id
-     * @param convert the tween value convertor(You can use it to convert the current value to its final form, e.g. convert "int" to "rgb")
+     * @param convert You can use it to convert the current value to its final form, e.g. convert "int" to "rgb"
      * @returns Tween instance
      */
     ATween.prototype.attach = function (obj, convert) {
@@ -695,15 +695,9 @@ var ATweenConvertor = /** @class */ (function () {
 var ATweenEasing = /** @class */ (function () {
     function ATweenEasing() {
     }
-    /**
-     * Linear
-     */
     ATweenEasing.Linear = function (k) {
         return k;
     };
-    /**
-     * Quadratic
-     */
     ATweenEasing.QuadraticIn = function (k) {
         return k * k;
     };
@@ -716,9 +710,6 @@ var ATweenEasing = /** @class */ (function () {
         }
         return -0.5 * (--k * (k - 2) - 1);
     };
-    /**
-     * Cubic
-     */
     ATweenEasing.CubicIn = function (k) {
         return k * k * k;
     };
@@ -731,9 +722,6 @@ var ATweenEasing = /** @class */ (function () {
         }
         return 0.5 * ((k -= 2) * k * k + 2);
     };
-    /**
-     * Quartic.
-     */
     ATweenEasing.QuarticIn = function (k) {
         return k * k * k * k;
     };
@@ -746,9 +734,6 @@ var ATweenEasing = /** @class */ (function () {
         }
         return -0.5 * ((k -= 2) * k * k * k - 2);
     };
-    /**
-     * Quintic.
-     */
     ATweenEasing.QuinticIn = function (k) {
         return k * k * k * k * k;
     };
@@ -761,9 +746,6 @@ var ATweenEasing = /** @class */ (function () {
         }
         return 0.5 * ((k -= 2) * k * k * k * k + 2);
     };
-    /**
-     * Sinusoidal.
-     */
     ATweenEasing.SinusoidalIn = function (k) {
         return 1 - Math.cos(k * Math.PI / 2);
     };
@@ -773,9 +755,6 @@ var ATweenEasing = /** @class */ (function () {
     ATweenEasing.SinusoidalInOut = function (k) {
         return 0.5 * (1 - Math.cos(Math.PI * k));
     };
-    /**
-     * Exponential.
-     */
     ATweenEasing.ExponentialIn = function (k) {
         return k == 0 ? 0 : Math.pow(1024, k - 1);
     };
@@ -794,9 +773,6 @@ var ATweenEasing = /** @class */ (function () {
         }
         return 0.5 * (-Math.pow(2, -10 * (k - 1)) + 2);
     };
-    /**
-     * Circular.
-     */
     ATweenEasing.CircularIn = function (k) {
         return 1 - Math.sqrt(1 - k * k);
     };
@@ -809,9 +785,6 @@ var ATweenEasing = /** @class */ (function () {
         }
         return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
     };
-    /**
-     * Elastic.
-     */
     ATweenEasing.ElasticIn = function (k) {
         if (k == 0) {
             return 0;
@@ -843,9 +816,6 @@ var ATweenEasing = /** @class */ (function () {
         }
         return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
     };
-    /**
-     * Back.
-     */
     ATweenEasing.BackIn = function (k) {
         var s = 1.70158;
         return k * k * ((s + 1) * k - s);
@@ -861,9 +831,6 @@ var ATweenEasing = /** @class */ (function () {
         }
         return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
     };
-    /**
-     * Bounce.
-     */
     ATweenEasing.BounceIn = function (k) {
         return 1 - ATweenEasing.BounceOut(1 - k);
     };

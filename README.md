@@ -10,8 +10,8 @@ It also provides the demo and documentation
 * [Online Examples](http://www.runoob.com)
 * [Online Documentation](http://www.runoob.com)
 
-At the end, This library has running in commercial systems for over 5 years, it is stable, you can use with confidence.
-#
+At the end, This library has running in commercial systems for over 5 years, it is stable, you can use with confidence.  
+***
 + **español**  
 "ATween" es una biblioteca fácil, rápida y pequeña.
 Puede ejecutarse en entorno "javascript" u otras plataformas (a través de "haxe", como "lua").

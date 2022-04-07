@@ -10,16 +10,11 @@
  */
 class ATweenEasing
 {
-    /**
-     * Linear
-     */
     public static Linear(k: number): number
     {
         return k;
     }
-    /**
-     * Quadratic
-     */
+
     public static QuadraticIn(k: number): number
     {
         return k * k;
@@ -36,9 +31,7 @@ class ATweenEasing
         }
         return -0.5 * (--k * (k - 2) - 1);
     }
-    /**
-     * Cubic
-     */
+
     public static CubicIn(k: number): number
     {
         return k * k * k;
@@ -55,9 +48,7 @@ class ATweenEasing
         }
         return 0.5 * ((k -= 2) * k * k + 2);
     }
-    /**
-     * Quartic.
-     */
+
     public static QuarticIn(k: number): number
     {
         return k * k * k * k;
@@ -74,9 +65,7 @@ class ATweenEasing
         }
         return -0.5 * ((k -= 2) * k * k * k - 2);
     }
-    /**
-     * Quintic.
-     */
+
     public static QuinticIn(k: number): number
     {
         return k * k * k * k * k;
@@ -93,9 +82,7 @@ class ATweenEasing
         }
         return 0.5 * ((k -= 2) * k * k * k * k + 2);
     }
-    /**
-     * Sinusoidal.
-     */
+
     public static SinusoidalIn(k: number): number
     {
         return 1 - Math.cos(k * Math.PI / 2);
@@ -108,9 +95,7 @@ class ATweenEasing
     {
         return 0.5 * (1 - Math.cos(Math.PI * k));
     }
-    /**
-     * Exponential.
-     */
+
     public static ExponentialIn(k: number): number
     {
         return k == 0 ? 0 : Math.pow(1024, k - 1);
@@ -135,9 +120,7 @@ class ATweenEasing
         }
         return 0.5 * (-Math.pow(2, -10 * (k - 1)) + 2);
     }
-    /**
-     * Circular.
-     */
+
     public static CircularIn(k: number): number
     {
         return 1 - Math.sqrt(1 - k * k);
@@ -154,9 +137,7 @@ class ATweenEasing
         }
         return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
     }
-    /**
-     * Elastic.
-     */
+
     public static ElasticIn(k: number): number
     {
         if (k == 0)
@@ -198,9 +179,7 @@ class ATweenEasing
         }
         return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
     }
-    /**
-     * Back.
-     */
+
     public static BackIn(k: number): number
     {
         var s = 1.70158;
@@ -220,9 +199,7 @@ class ATweenEasing
         }
         return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
     }
-    /**
-     * Bounce.
-     */
+    
     public static BounceIn(k: number): number
     {
         return 1 - ATweenEasing.BounceOut(1 - k);

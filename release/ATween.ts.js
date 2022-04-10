@@ -32,7 +32,7 @@ var ATween = /** @class */ (function () {
         this._isFirstUpdate = true;
         this._startMs = 0;
         this._delayMs = 0;
-        this._durationMs = 1;
+        this._durationMs = 1; // can't be 0
         this._repeatTimes = 0;
         this._yoyo = false;
         this._isCompleted = false;
@@ -170,6 +170,9 @@ var ATween = /** @class */ (function () {
         if (delayMs === void 0) { delayMs = 0; }
         ATween.checkInstalled();
         var t = new ATween(target);
+        if (durationMs < 0) {
+            durationMs = 1;
+        }
         t._durationMs = durationMs;
         t._delayMs = delayMs;
         return t;
@@ -354,7 +357,7 @@ var ATween = /** @class */ (function () {
             this._isFirstUpdate = false;
         }
         this.elapsedPercentage = (this.elapsedMs - this._startMs) / this._durationMs;
-        if (ms >= 0x7FFFFFFF || this.elapsedPercentage > 1) {
+        if (ms >= 0x7FFFFFFF || this.elapsedPercentage > 1 || this._durationMs == 1) {
             this.elapsedPercentage = 1;
         }
         // update target

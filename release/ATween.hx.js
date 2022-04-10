@@ -130,6 +130,9 @@ ATween.newTween = function(target,durationMs,delayMs) {
 	}
 	ATween.checkInstalled();
 	var t = new ATween(target);
+	if(durationMs < 0) {
+		durationMs = 1;
+	}
 	t._durationMs = durationMs;
 	t._delayMs = delayMs;
 	return t;
@@ -276,7 +279,7 @@ ATween.prototype = {
 			this._isFirstUpdate = false;
 		}
 		this.elapsedPercentage = (this.elapsedMs - this._startMs) / this._durationMs;
-		if(ms >= 2147483647 || this.elapsedPercentage > 1) {
+		if(ms >= 2147483647 || this.elapsedPercentage > 1 || this._durationMs == 1) {
 			this.elapsedPercentage = 1;
 		}
 		this.updateTarget(this.elapsedPercentage);

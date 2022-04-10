@@ -50,7 +50,7 @@ class ATween
 
     private _startMs: number = 0;
     private _delayMs: number = 0;
-    private _durationMs: number = 1;
+    private _durationMs: number = 1; // can't be 0
     private _repeatTimes: number = 0;
     private _yoyo: boolean = false;
     private _isCompleted = false;
@@ -212,6 +212,10 @@ class ATween
     {
         ATween.checkInstalled();
         var t = new ATween(target);
+        if (durationMs < 0)
+        {
+            durationMs = 1;
+        }
         t._durationMs = durationMs;
         t._delayMs = delayMs;
         return t;
@@ -426,7 +430,7 @@ class ATween
             this._isFirstUpdate = false;
         }
         this.elapsedPercentage = (this.elapsedMs - this._startMs) / this._durationMs;
-        if (ms >= 0x7FFFFFFF || this.elapsedPercentage > 1)
+        if (ms >= 0x7FFFFFFF || this.elapsedPercentage > 1 || this._durationMs == 1)
         {
             this.elapsedPercentage = 1;
         }

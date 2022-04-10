@@ -51,7 +51,7 @@ class ATween
 
     private var _startMs:Float = 0;
     private var _delayMs:Float = 0;
-    private var _durationMs:Float = 1;
+    private var _durationMs:Float = 1; // can't be 0
     private var _repeatTimes:Int = 0;
     private var _yoyo = false;
     private var _isCompleted = false;
@@ -204,6 +204,10 @@ class ATween
     {
         checkInstalled();
         var t = new ATween(target);
+        if (durationMs < 0)
+        {
+            durationMs = 1;
+        }
         t._durationMs = durationMs;
         t._delayMs = delayMs;
         return t;
@@ -429,7 +433,7 @@ class ATween
             _isFirstUpdate = false;
         }
         elapsedPercentage = (elapsedMs - _startMs) / _durationMs;
-        if (ms >= 0x7FFFFFFF || elapsedPercentage > 1)
+        if (ms >= 0x7FFFFFFF || elapsedPercentage > 1 || _durationMs == 1)
         {
             elapsedPercentage = 1;
         }

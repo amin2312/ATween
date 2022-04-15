@@ -131,7 +131,7 @@ class ATween
      * Kill all tweens of specified the target or attachment.
      * @param targetOrAttachment the target or attachment.
      * @param withComplete Specifies whether to call complete function.
-     * @returns Number of killed instances
+     * @return Number of killed instances
      */
     public static killTweens(targetOrAttachment: any, withComplete: boolean = false): number
     {
@@ -206,7 +206,7 @@ class ATween
      * @param target the targer object.
      * @param durationMs set duration, not including any repeats or delays.
      * @param delayMs set initial delay which is the length of time in ms before the tween should begin.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public static newTween(target: any, durationMs: number, delayMs: number = 0): ATween
     {
@@ -227,7 +227,7 @@ class ATween
      * @param intervalMs interval millisecond
      * @param onCompleteCallback The callback function when completion.
      * @param onCompleteParams The callback parameters when completion.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public static newOnce(intervalMs: number, onCompleteCallback: any, onCompleteParams: Array<any> = null): ATween
     {
@@ -247,7 +247,7 @@ class ATween
      * @param onRepeatCallback  if return FASLE, then will cancel this timer.
      * @param onCompleteCallback The callback function when completion.
      * @param onCompleteParams The callback parameters when completion.
-     * @returns Tween instance
+     * @return Tween instance
      **/
     public static newTimer(intervalMs: number, times: number, onRepeatCallback: (steps: number) => boolean, onCompleteCallback: any = null, onCompleteParams: Array<any> = null): ATween
     {
@@ -262,7 +262,7 @@ class ATween
     }
     /**
      * Start the tween/timer.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public start(): ATween
     {
@@ -491,7 +491,7 @@ class ATween
     /**
      * Cancel this tween.
      * @param withComplete Specifies whether to call complete function.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public cancel(withComplete: boolean = false): void
     {
@@ -516,7 +516,7 @@ class ATween
     /**
      * The destination values that the target wants to achieves.
      * @param endValues destination values.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public to(endValues: any): ATween
     {
@@ -527,7 +527,7 @@ class ATween
      * Attach to HTMLElement element (The tween value will auto sync to this element).
      * @param obj HTMLElement or element id
      * @param convert You can use it to convert the current value to its final form, e.g. convert "int" to "rgb"
-     * @returns Tween instance
+     * @return Tween instance
      */
     public attach(obj: HTMLElement | string, convert: (curValue: number, startValue: number, endValue: number, percent: number, property: string) => any = null): ATween
     {
@@ -557,7 +557,7 @@ class ATween
      * @param times the repeat times(-1 is infinity)
      * @param yoyo where true causes the tween to go back and forth, alternating backward and forward on each repeat.
      * @param delayMs delay trigger time
-     * @returns Tween instance
+     * @return Tween instance
      */
     public repeat(times: number, yoyo: boolean = false, delayMs: number = 0): ATween
     {
@@ -571,7 +571,7 @@ class ATween
      * Calls the "onRepeat" function immediately(repeat times is 0).
      * @remark
      * IF you need to init the environment, then it's a good choice.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public callRepeat(): ATween
     {
@@ -585,7 +585,7 @@ class ATween
     }
     /**
      * Set easing function.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public easing(func: (v: number) => number): ATween
     {
@@ -594,7 +594,7 @@ class ATween
     }
     /**
      * Keep this tween, "killAll" has no effect on it.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public retain(): ATween
     {
@@ -603,7 +603,7 @@ class ATween
     }
     /**
      * Release this retained tween.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public release(): ATween
     {
@@ -612,7 +612,7 @@ class ATween
     }
     /**
      * Indicates whether the tween is keeping.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public isRetained(): boolean
     {
@@ -662,7 +662,7 @@ class ATween
     }
     /**
      * Set the callback function when startup.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public onStart(callback: () => void): ATween
     {
@@ -671,7 +671,7 @@ class ATween
     }
     /**
      * Set the callback function when updating.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public onUpdate(callback: (percent: number, times: number) => void): ATween
     {
@@ -680,7 +680,7 @@ class ATween
     }
     /**
      * Set the callback function when completion.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public onComplete(callback: (...argArray: any[]) => void, params: Array<any> = null): ATween
     {
@@ -694,7 +694,7 @@ class ATween
     }
     /**
      * Set the callback function when canceled.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public onCancel(callback: () => void): ATween
     {
@@ -705,7 +705,7 @@ class ATween
      * Set the callback function when repeating.
      * @remarks
      * if return FASLE, then will cancel this timer.
-     * @returns Tween instance
+     * @return Tween instance
      */
     public onRepeat(callback: (steps: number) => boolean): ATween
     {

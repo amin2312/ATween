@@ -1,2 +1,10 @@
-// use typedoc to gen docs
+//
+// USE typedoc to gen docs
+// Please install the tools first: npm install typedoc
+//
 npx typedoc --out release/docs/ts --entryPointStrategy expand ./src/ts --cleanOutputDir false --excludePrivate
+//
+// USE uglify to compress js file
+// Please install the tools first: npm install gulp-uglify
+//
+uglifyjs release/ATween.hx.js -m -o release/ATween.min.js

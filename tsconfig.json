@@ -6,12 +6,11 @@
     "strictNullChecks": false,
     "skipLibCheck": true,
     "target": "ES5",
-    "rootDir": "src",
-
-    "outDir": "release",
+    "rootDir": "src",    
     "outFile": "release/ATween.ts.js",
   },
   "exclude": [
-    "src/examples"
+    "src/examples",
+    "release/*"
   ]
 }

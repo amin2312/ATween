@@ -1,5 +1,5 @@
 "use strict";
-/// <reference path="d/ATween.d.ts" />
+/// <reference path="../../release/ATween.d.ts" />
 /**
  * Test Units
  */

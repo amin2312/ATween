@@ -10,7 +10,7 @@
     "outFile": "release/ATween.ts.js",
   },
   "exclude": [
-    "src/examples",
+    "src/demos",
     "release/*"
   ]
 }

@@ -5,7 +5,6 @@
  * 3. MIT License
  *
  * ATween is a easy, fast and tiny tween library.
- * It can run in javascript environment or other platforms (such as lua via haxe).
  */
 var ATween = /** @class */ (function () {
     /**

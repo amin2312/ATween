@@ -12,7 +12,7 @@ The features:
 Example
 ----------------
 It use Method Chaining, the code as below:  
-```javascript 
+```javascript
 ATween.newTween(target, 1000).to({x: 100}).repeat(2, false).start();
 ```
 

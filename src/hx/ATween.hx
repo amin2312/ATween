@@ -378,8 +378,8 @@ class ATween
             this._updateSteps++;
             var cb = _onUpdateCallback;
             #if js
-			untyped __js__('cb.call({0},{1},{2})', this, percent, this._updateSteps);
-			#else
+            untyped __js__('cb.call({0},{1},{2})', this, percent, this._updateSteps);
+            #else
             cb(percent, _updateSteps);
             #end
         }
@@ -419,8 +419,8 @@ class ATween
             {
                 var cbS = _onStartCallback;
                 #if js
-				untyped __js__('cbS.call({0})', this);
-				#else
+                untyped __js__('cbS.call({0})', this);
+                #else
                 cbS();
                 #end
             }
@@ -471,8 +471,8 @@ class ATween
                     var cbR = this._onRepeatCallback;
                     var rzl:Bool;
                     #if js
-					rzl = untyped __js__('cbR.call({0},{1})', this, _repeatSteps);
-					#else
+                    rzl = untyped __js__('cbR.call({0},{1})', this, _repeatSteps);
+                    #else
                     rzl = cbR(_repeatSteps);
                     #end
                     if (rzl == false)
@@ -489,8 +489,8 @@ class ATween
                 {
                     var cbC = this._onCompleteCallback;
                     #if js
-					untyped __js__('cbC.apply({0},{1})', this, _onCompleteParams);
-					#else
+                    untyped __js__('cbC.apply({0},{1})', this, _onCompleteParams);
+                    #else
                     Reflect.callMethod(null, cbC, _onCompleteParams);
                     #end
                 }
@@ -523,8 +523,8 @@ class ATween
         {
             var cb = _onCancelCallback;
             #if js
-			untyped __js__('cb.call({0})', this);
-			#else
+            untyped __js__('cb.call({0})', this);
+            #else
             cb();
             #end
         }
@@ -595,8 +595,8 @@ class ATween
         var cb = this._onRepeatCallback;
         var rzl:Bool;
         #if js
-		rzl = untyped __js__('cb.call({0}, 0)', this);
-		#else
+        rzl = untyped __js__('cb.call({0}, 0)', this);
+        #else
         rzl = cb(0);
         #end
         if (rzl == false)
